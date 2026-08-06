@@ -1,17 +1,19 @@
-# Complete Variables Tab
+# Complete Data Dictionary
 
-Use this skill when the user wants to fill the INDIVIDUAL VARIABLES sheet of `databio_v1.xlsx`.
+Use this skill when the user wants to fill `DataDict.xlsx`.
 
-The INDIVIDUAL VARIABLES sheet is a structured data dictionary with one row per variable and 12 columns. This skill generates a draft row for each variable from the available dataset or documentation.
+`DataDict.xlsx` is a structured data dictionary with one row per variable and 13 columns. This skill generates a draft row for each variable from the available dataset or documentation.
+
+Note: this is one of three files in a dataset catalog (alongside `Metadata.xlsx` and `DataBio.xlsx`). It is a data dictionary/codebook, not a "data biography" — that term is reserved for `DataBio.xlsx`'s 22 narrative questions. See the `catalog-dataset` skill if the user wants all three filled together.
 
 ## When to use this skill
 
 Use this skill when the user asks to:
 
-* Fill or complete the INDIVIDUAL VARIABLES tab in databio_v1.xlsx
+* Fill or complete DataDict.xlsx
 * Generate a data dictionary or codebook for a dataset
 * Describe dataset columns or variables
-* Produce variable-level metadata for a catalog, README, or data biography
+* Produce variable-level metadata for a catalog or README
 
 ## Inputs
 
@@ -28,9 +30,17 @@ The user may provide one or more of the following:
 
 ## Outputs
 
-A data dictionary table with one row per variable and 12 columns, matching the INDIVIDUAL VARIABLES tab structure. Includes confidence scores and review flags per variable. Ends with a prioritized "Variables for human review" list.
+A data dictionary table with one row per variable and 13 columns, matching the DataDict.xlsx structure. Includes confidence scores and review flags per variable. Ends with a prioritized "Variables for human review" list.
 
-## The 12 variable columns
+## The 13 variable columns
+
+### file_name
+
+The name of the file this variable belongs to (e.g., the dataset filename, or a table/sheet name if the dataset bundle has multiple files).
+
+Derive from: the dataset filename (Mode A), or the file name as stated in documentation (Mode B — e.g., a data layout doc that lists file names).
+
+If the dataset is a bundle of multiple files, repeat this column per variable so each row is traceable to its source file. Flag for review if the source file is ambiguous.
 
 ### variable_name
 
@@ -153,16 +163,19 @@ If no issues are identified, leave blank.
 
 ## Output format
 
-Default to a markdown table:
+In chat, default to a markdown table:
 
-| variable_name | variable_label | definition | data_type | unit | allowed_values_codes | missing_unknown_codes | source_derivation | numerator | denominator | sensitive | data_quality_notes |
-| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+| file_name | variable_name | variable_label | definition | data_type | unit | allowed_values_codes | missing_unknown_codes | source_derivation | numerator | denominator | sensitive | data_quality_notes |
+| --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
+
+This table (plus `confidence`/`needs_review` from the YAML below) feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. The final `DataDict.xlsx` file has these same 13 content columns but no confidence or needs_review columns: variables still flagged `needs_review` get a yellow-filled Variable Name cell with an Excel comment carrying the issue, and `sensitive: true` variables get a red-filled Sensitive? cell.
 
 Also provide a YAML block:
 
 ```yaml
 variables_tab:
-  - variable_name:
+  - file_name:
+    variable_name:
     variable_label:
     definition:
     data_type:

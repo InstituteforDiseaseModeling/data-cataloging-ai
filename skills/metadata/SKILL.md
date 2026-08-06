@@ -1,14 +1,18 @@
 # Complete Metadata Tab
 
-Use this skill when the user wants to fill the METADATA sheet of `databio_v1.xlsx`.
+Use this skill when the user wants to fill the "Metadata" sheet of `Metadata.xlsx`.
 
-The METADATA sheet captures 18 administrative and technical fields that identify a dataset, describe its scope, and record stewardship information. This skill drafts as many fields as possible from available sources and flags what requires human input.
+The Metadata sheet captures 18 administrative and technical fields that identify a dataset, describe its scope, and record stewardship information. This skill drafts as many fields as possible from available sources and flags what requires human input.
+
+The final `Metadata.xlsx` file itself only has two content columns — `Field` and `Response` — in rows 4–21 (row 3 is the header). There is no room in the template for source, confidence, or review-flag columns, so this skill tracks that richer context in chat and in `catalog_draft.json`, and the generator surfaces unresolved items as a highlighted cell with a comment rather than an extra column. See "Output format" below.
+
+Note: this is one of three files in a dataset catalog (alongside `DataBio.xlsx` and `DataDict.xlsx`). "Data Biography" refers specifically to `DataBio.xlsx`'s 22 narrative questions, not to metadata or to the catalog as a whole — see the `catalog-dataset` skill if the user wants all three filled together.
 
 ## When to use this skill
 
 Use this skill when the user asks to:
 
-* Fill or complete the METADATA tab in databio_v1.xlsx
+* Fill or complete the Metadata tab in Metadata.xlsx
 * Generate administrative metadata for a dataset
 * Draft dataset-level identification, coverage, and stewardship fields
 * Prepare a dataset for entry into a data catalog
@@ -56,7 +60,7 @@ Derive from: filename versioning, documentation, file metadata, user context.
 
 If not provided, leave blank and flag for review.
 
-### 4. Date biography last updated
+### 4. Date catalog last updated
 
 Set to today's date automatically.
 
@@ -167,10 +171,12 @@ If not documented, set to "Requires human input."
 
 ## Output format
 
-Return a markdown table:
+In chat, return a markdown table:
 
 | Field | Draft value | Source | Confidence | Needs review |
 | ----- | ----------- | ------ | ---------- | ------------ |
+
+This `value/source/confidence/needs_review` shape also feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. It does **not** map one-to-one onto the final `Metadata.xlsx` file: that template only has `Field` and `Response` columns. When the file is generated, each field's `value` goes into Response as plain text; fields still flagged `needs_review` get a yellow-filled Response cell with an Excel comment carrying the review question (source/confidence are not visible columns in the deliverable — keep them in chat and the JSON draft).
 
 Also return a YAML block:
 
@@ -191,7 +197,7 @@ metadata_tab:
     source:
     confidence:
     needs_review:
-  date_bio_last_updated:
+  date_catalog_last_updated:
     value:
     source:
     confidence:

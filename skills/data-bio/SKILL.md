@@ -1,16 +1,20 @@
 # Complete Data Bio Tab
 
-Use this skill when the user wants to fill the DATA BIO sheet of `databio_v1.xlsx`.
+Use this skill when the user wants to fill the "Data Bio" sheet of `DataBio.xlsx`.
 
-The DATA BIO sheet contains 22 narrative questions across six sections (A–F) adapted from the We All Count Data Biography framework. It captures dataset purpose, provenance, collection methods, coverage, consent, and quality — with a focus on equity, ethics, and responsible data use.
+The Data Bio sheet contains 22 narrative questions across six sections (A–F) adapted from the We All Count Data Biography framework. It captures dataset purpose, provenance, collection methods, coverage, consent, and quality — with a focus on equity, ethics, and responsible data use.
 
-This tab is the most human-judgment-intensive of the three databio tabs. This skill extracts as much as possible from available documentation, but it will not guess on equity, consent, or representativeness questions — those require the data owner or steward.
+This tab is the most human-judgment-intensive of the three catalog files. This skill extracts as much as possible from available documentation, but it will not guess on equity, consent, or representativeness questions — those require the data owner or steward.
+
+Note: "Data Biography" is this file specifically — the 22 narrative questions, a framework term from We All Count. It is not a name for the whole catalog (Metadata + DataBio + DataDict); see the `catalog-dataset` skill if the user wants all three filled together.
+
+`DataBio.xlsx` has five columns: `Section | Question | Clarification/example | Select from common dropdown options or write in: | Notes/Comments`. Most questions (Q2–Q12, Q14, Q16–Q21) are backed by a controlled vocabulary on the workbook's "Lists" sheet, exposed as an Excel dropdown on the answer column — but the dropdown prompt itself says "Choose from the list, or type your own answer if none fit," so it's a suggestion, not an enforced constraint. Q1, Q13, Q15, and Q22 have no list and are always open narrative text. See "Controlled vocabulary by question" below for the exact allowed values.
 
 ## When to use this skill
 
 Use this skill when the user asks to:
 
-* Fill or complete the DATA BIO tab in databio_v1.xlsx
+* Fill or complete the Data Bio tab in DataBio.xlsx
 * Draft narrative responses to data biography questions
 * Document dataset purpose, provenance, consent, and quality for a data catalog
 * Generate an equity- and ethics-aware dataset description
@@ -203,6 +207,31 @@ Draft technical limitations from `profile-dataset` output (missingness, coverage
 
 Auto-fill potential: **Medium (technical limitations)** / **Low (equity and interpretation judgment)**.
 
+## Controlled vocabulary by question
+
+When drafting a response for one of these questions, prefer one of its listed values if it fits; otherwise write free text (the template explicitly allows writing in an answer that isn't on the list). Do not force a poor-fitting category — a clear free-text answer beats a mismatched list value.
+
+* **Q2** (why originally collected): Surveillance, Program monitoring, Research, Service delivery, Modeling, Reporting, Evaluation, Multiple purposes, Other
+* **Q3** (current use): Same as original purpose, Surveillance, Program monitoring, Research, Service delivery, Modeling, Reporting, Evaluation, Policy-making, Other
+* **Q4** (inappropriate uses): Re-identifying individuals, Population profiling or targeting, Policy decisions beyond the data's scope/validity, Commercial resale or monetization, Law enforcement or immigration enforcement, Denying services or benefits, Comparisons across incompatible groups/periods, Other
+* **Q5** (who collected): Government agency, Research institution/university, NGO/implementing partner, Private company/platform, Multilateral organization, Community-based organization, AI/model system, Other
+* **Q6** (who provided): Individuals/respondents, Households, Patients/clients, Facilities/institutions, Program or administrative staff, Sensors/devices/systems, Other
+* **Q7** (government partnership): Yes, fully government-led; Yes, in partnership with government; No government involvement; Unclear/Unknown
+* **Q8** (data chain): Yes, combined/merged; Yes, passed through multiple systems; No; Unknown
+* **Q9** (how collected): Survey, Interview, Administrative record, Surveillance system, Sensor/device data, Web or app data, Model-derived/synthetic data, Other
+* **Q10** (tools/technologies): Paper questionnaire, Electronic/mobile data collection, Administrative/IT system, API, Model pipeline, Sensor/IoT device, Other
+* **Q11** (question administration mode): In-person, Phone/telephone, Self-administered (online/paper), Proxy respondent, Not applicable, Other
+* **Q12** (incentives/eligibility/follow-ups): Yes, incentives used; Yes, eligibility rules/skip patterns used; Yes, repeated follow-ups used; No; Unknown
+* **Q14** (selection method): Census/full enumeration, Probability/random sampling, Convenience sampling, Purposive sampling, Administrative/reporting requirement (not sampled), Other
+* **Q16** (informed consent): Yes, No, Unknown
+* **Q17** (incentive or benefit eligibility): Yes, No, Partial (e.g., some respondents/some data elements), Not applicable, Unknown
+* **Q18** (collected by government): Yes, No, Public-private partnership, Unknown
+* **Q19** (blinding process): Yes, No, Unknown
+* **Q20** (documentation status): Yes, fully documented; Partially documented; No; Unknown
+* **Q21** (processing applied): Cleaned, Transformed, Aggregated, Linked/merged, Anonymized/de-identified, Modeled/derived, Multiple of the above, No processing applied, Unknown
+
+Q1, Q13, Q15, and Q22 have no controlled vocabulary — always draft open narrative text for these.
+
 ## Required behavior
 
 * Use documentation as the primary source for all responses.
@@ -221,7 +250,9 @@ Auto-fill potential: **Medium (technical limitations)** / **Low (equity and inte
 
 ## Output format
 
-Organized by section (A–F). For each question:
+In chat, organize by section (A–F). For each question, the `response`/`source`/`confidence`/`needs_review` shape below feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. It does not map one-to-one onto the final `DataBio.xlsx` file: `response` goes into the "Select from common dropdown options or write in:" column, and `source` becomes `"Source: {source}"` in the Notes/Comments column (prefixed with the review question when `needs_review` is true). There is no separate confidence column in the deliverable — questions still flagged `needs_review` get a yellow-filled answer cell with an Excel comment instead.
+
+For each question:
 
 ```
 **Q[N]: [Question text]**
