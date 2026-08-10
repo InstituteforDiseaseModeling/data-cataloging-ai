@@ -13,6 +13,8 @@ Usage:
     python generate_catalog.py
     python generate_catalog.py --input path/to/catalog_draft.json
     python generate_catalog.py --input draft.json --output-dir out/
+    python generate_catalog.py --only databio            # just DataBio.xlsx
+    python generate_catalog.py --only metadata,datadict   # any subset
 """
 
 import json
@@ -197,10 +199,14 @@ def fill_datadict(data, output_dir, base_name):
     return output_path
 
 
+ALL_TARGETS = ("metadata", "databio", "datadict")
+
+
 def main():
     args = sys.argv[1:]
     input_path = "catalog_draft.json"
     output_dir = Path.cwd()
+    targets = list(ALL_TARGETS)
 
     i = 0
     while i < len(args):
@@ -209,6 +215,12 @@ def main():
             i += 2
         elif args[i] == "--output-dir" and i + 1 < len(args):
             output_dir = Path(args[i + 1])
+            i += 2
+        elif args[i] == "--only" and i + 1 < len(args):
+            targets = [t.strip().lower() for t in args[i + 1].split(",")]
+            unknown = [t for t in targets if t not in ALL_TARGETS]
+            if unknown:
+                sys.exit(f"ERROR: unknown --only target(s) {unknown}; choose from {ALL_TARGETS}")
             i += 2
         else:
             i += 1
@@ -222,13 +234,15 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     base_name = data.get("dataset_name", "Dataset").replace(" ", "_")
 
-    metadata_path = fill_metadata(data, output_dir, base_name)
-    databio_path = fill_databio(data, output_dir, base_name)
-    datadict_path = fill_datadict(data, output_dir, base_name)
-
-    print(f"Metadata saved: {metadata_path.resolve()}")
-    print(f"DataBio saved:  {databio_path.resolve()}")
-    print(f"DataDict saved: {datadict_path.resolve()}")
+    fillers = {
+        "metadata": ("Metadata", fill_metadata),
+        "databio": ("DataBio", fill_databio),
+        "datadict": ("DataDict", fill_datadict),
+    }
+    for target in targets:
+        label, fill_fn = fillers[target]
+        path = fill_fn(data, output_dir, base_name)
+        print(f"{label} saved: {path.resolve()}")
 
 
 if __name__ == "__main__":

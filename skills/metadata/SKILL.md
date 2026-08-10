@@ -24,7 +24,10 @@ The user may provide one or more of the following:
 * A dataset file (CSV, Excel, Parquet, JSON, GeoJSON, etc.)
 * A dataset profile from the `profile-dataset` skill
 * Existing documentation (README, protocol, published papers, study report)
+* A URL — either a direct link to a downloadable data file, or a link to a page describing the dataset
 * User-provided context about ownership, access, storage, or citation
+
+If given a URL, resolve it before drafting anything — see `data-bio`'s Step 1 for the full procedure: fetch it, don't guess which file is meant if a page links to several, and if you download a single unambiguous file, state plainly what was pulled before continuing.
 
 **Mode A** (full data available): use the dataset file and documentation together.
 **Mode B** (documentation only): use available documentation only. Do not invent dataset structure or characteristics.

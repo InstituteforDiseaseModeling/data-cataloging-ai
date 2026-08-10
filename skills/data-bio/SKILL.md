@@ -10,6 +10,8 @@ Note: "Data Biography" is this file specifically — the 22 narrative questions,
 
 `DataBio.xlsx` has five columns: `Section | Question | Clarification/example | Select from common dropdown options or write in: | Notes/Comments`. Most questions (Q2–Q12, Q14, Q16–Q21) are backed by a controlled vocabulary on the workbook's "Lists" sheet, exposed as an Excel dropdown on the answer column — but the dropdown prompt itself says "Choose from the list, or type your own answer if none fit," so it's a suggestion, not an enforced constraint. Q1, Q13, Q15, and Q22 have no list and are always open narrative text. See "Controlled vocabulary by question" below for the exact allowed values.
 
+This skill follows a four-step interactive process — draft, ask what needs human input, review section by section, then generate the file — see "Workflow" below. Don't jump straight from drafting to generating the Excel file.
+
 ## When to use this skill
 
 Use this skill when the user asks to:
@@ -29,6 +31,7 @@ The user may provide one or more of the following:
 * Existing README or project documentation
 * A dataset profile from the `profile-dataset` skill
 * A filled METADATA tab
+* A URL — either a direct link to a downloadable data file, or a link to a page describing the dataset (see Step 1 for how this is resolved)
 * User-provided context about purpose, methods, population, or access
 
 **Mode A** (full data available): use documentation as the primary source; the dataset file may support Section F questions on data quality.
@@ -44,6 +47,51 @@ Draft responses to all 22 questions, organized by section A–F. Each question i
 * Needs review flag
 
 Followed by a consolidated "Questions for human review" list.
+
+## Workflow
+
+This is the entry point when the user mentions filling out a data bio/biography specifically (not the full catalog — see "Relationship to other skills"). Follow these steps in order. Do not generate the Excel file before every section has been explicitly approved.
+
+### Step 1: Resolve sources and draft
+
+If the user provides a URL instead of, or in addition to, an uploaded file:
+
+1. Fetch the URL to see what it actually is: a direct downloadable data file (CSV, Excel, JSON, Parquet, a zipped data bundle, a documented API/export endpoint), or a landing/documentation page that describes a dataset and links out to one or more resources.
+2. If the page exposes more than one candidate file, version, or resource — per-year extracts, per-region files, multiple formats of the same data, etc. — **do not guess which one the user means**. Stop and list the options, and ask the user to confirm which file(s) to use before downloading or drafting anything.
+3. If there is a single, unambiguous downloadable file, download it. Before drafting anything, tell the user exactly what was pulled: file name, source URL, format, and size (plus row/column count if quick to check). This is a transparency checkpoint, not a blocking question — state it plainly as the lead line of your first response so the user has an obvious chance to say "that's not the one" before you go further, then continue into drafting in the same turn.
+4. If the page only exposes documentation with no downloadable data, proceed in Mode B and say so explicitly.
+5. Record the exact source (URL, and the fetched file name if applicable) in `sources_used`.
+
+Then draft a response to all 22 questions using the derivation logic in "Section A–F" below, following "Controlled vocabulary by question" where applicable. For each question, determine `response`, `source`, `confidence`, `needs_review`, and `review_notes`.
+
+Write the draft to the `data_bio` array of `catalog_draft.json` in the current working directory (create the file with a `dataset_name` and empty `metadata`/`variables` arrays if it doesn't exist yet — see the schema in the `catalog-dataset` skill). Do this before presenting anything to the user.
+
+### Step 2: Ask the questions that need human input
+
+Present only the questions still flagged `needs_review: true` after drafting — this always includes Q4, Q16–Q19, and the equity-judgment portions of Q15 and Q22 (see their sections below), plus anything else that couldn't be determined from available sources. Number them, show what (if anything) was inferred, and ask the user to answer or confirm. One round — do not split this into tiers.
+
+Wait for the user's response before continuing. Update `catalog_draft.json`: for answered questions, set `response` to the human's answer, `source` to `"Human input"`, `needs_review` to `false`. For anything the user explicitly skips, leave `needs_review: true` and move on rather than blocking.
+
+### Step 3: Section-by-section review
+
+Present the questions one section at a time, in order (A → B → C → D → E → F), showing every question's current response — not just the ones that were flagged, since a confidently auto-filled answer may still need the user's editorial correction. For each section:
+
+1. Show the section's questions and current responses.
+2. Ask the user to approve as-is or request changes.
+3. If they request changes, apply them, update `catalog_draft.json`, and show the revised section again.
+4. Repeat until the user approves that section, then move to the next.
+
+Do not move to the next section until the current one is explicitly approved, and do not present more than one section at a time.
+
+### Step 4: Generate the Excel file
+
+Once all six sections are approved, run:
+
+```
+python generate_catalog.py --only databio
+```
+
+This fills `DataBio.xlsx` from `catalog_draft.json` and writes `<Dataset>_DataBio.xlsx`. Tell the user the full path to the file so they can retrieve it.
 
 ## Section A: Dataset Purpose and Intended Use
 
@@ -250,7 +298,15 @@ Q1, Q13, Q15, and Q22 have no controlled vocabulary — always draft open narrat
 
 ## Output format
 
-In chat, organize by section (A–F). For each question, the `response`/`source`/`confidence`/`needs_review` shape below feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. It does not map one-to-one onto the final `DataBio.xlsx` file: `response` goes into the "Select from common dropdown options or write in:" column, and `source` becomes `"Source: {source}"` in the Notes/Comments column (prefixed with the review question when `needs_review` is true). There is no separate confidence column in the deliverable — questions still flagged `needs_review` get a yellow-filled answer cell with an Excel comment instead.
+In chat, organize by section (A–F). For each question, the `response`/`source`/`confidence`/`needs_review` shape below feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. It does not map one-to-one onto the final `DataBio.xlsx` file: `response` goes into the "Select from common dropdown options or write in:" column, and `source` is written directly into the Notes/Comments column (prefixed with the review question when `needs_review` is true). There is no separate confidence column in the deliverable — questions still flagged `needs_review` get a yellow-filled answer cell with an Excel comment instead.
+
+The `source` field is a plain-language attribution, not just a citation, since a reader opening the file cold has no visibility into the drafting/review conversation. Compose it as:
+
+* A response drawn from a specific document or page: `"Source: {URL or document name}"`.
+* An AI-drafted response (inference, judgment call, or "not applicable" conclusion with nothing directly citable) that a human then reviewed and accepted: `"Generated by AI, reviewed and approved by {reviewer}."` — append `" Source: {URL}"` if a specific page was also consulted, even if the exact wording isn't drawn verbatim from it.
+* A response the user wrote or dictated directly: `"Human input."`
+
+Default `{reviewer}` to the current user's identity from session context (e.g. email, git config) rather than asking, unless it's ambiguous or the user says otherwise. Every question that reaches Step 3 of the Workflow ends up reviewed and approved at the section level, so this attribution applies across the board, not just to individually-flagged questions — the exception is a question left as an explicit unanswered placeholder (e.g. "Need researcher to complete"), which has no attribution to make.
 
 For each question:
 
@@ -387,7 +443,7 @@ data_bio_tab:
 
 ## Questions for human review
 
-End with a section called `Questions for human review`. Include only questions with needs_review: true, structured as:
+These are the questions Step 2 of the Workflow asks the user interactively, in a single round ordered Critical first, then Important, then Optional — not split into separate tiered rounds (that tiering is specific to the `catalog-dataset` skill, which handles all three files at once). Include only questions with needs_review: true, structured as:
 
 ```
 Priority: Critical / Important / Optional
@@ -402,6 +458,10 @@ Priority guidance:
 * Important: Q3 (current use), Q7–Q8 (provenance chain), Q22 (limitations and equity caveats)
 * Optional: Q11–Q12 (administration details) if questionnaire was not provided
 
+## Relationship to other skills
+
+Use this skill when the user asks specifically about a data bio/biography. If the user wants metadata and/or a data dictionary filled too, use `catalog-dataset` instead — it runs the same drafting logic for all three files together with its own tiered Q&A, and generates all three Excel files at once.
+
 ## Do not do the following
 
 Do not:
@@ -413,3 +473,8 @@ Do not:
 * Treat Q4 (inappropriate uses) or Q22 (equity caveats) as technically answerable from data alone.
 * Frame limitations as minor when they may be significant for equity or interpretation.
 * Invent purpose, methodology, or access conditions.
+* Skip Step 2 (asking needs-review questions) or Step 3 (section-by-section review) — do not go straight from drafting to generating the Excel file.
+* Present more than one section at a time in Step 3, or move on before the current section is explicitly approved.
+* Mix Step 2's questions into tiers — ask them in a single round.
+* Guess which file a landing page refers to when it links to multiple candidates — ask first.
+* Draft from a downloaded file without first telling the user exactly what was pulled and from where.

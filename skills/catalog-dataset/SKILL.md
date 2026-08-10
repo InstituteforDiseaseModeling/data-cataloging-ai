@@ -21,7 +21,7 @@ The user may provide one or more of the following:
 * A dataset file (CSV, Excel, Parquet, Stata .dta, JSON, etc.)
 * A folder of datasets
 * Supporting documentation (protocol, questionnaire, published papers, README, codebook, existing data dictionary)
-* URLs to published papers or documentation
+* A URL — either a direct link to a downloadable data file, or a link to a page describing the dataset
 * Previously generated outputs from the `metadata`, `data-bio`, or `data-dictionary` skills
 * User-provided context about the dataset
 
@@ -37,6 +37,8 @@ Do not skip or reorder phases.
 ---
 
 ### Phase 1: Draft all three tabs
+
+If the user provides a URL instead of, or in addition to, an uploaded file, resolve it first — see `data-bio`'s Step 1 for the full procedure: fetch it, determine whether it's a direct data file or a documentation/landing page, **stop and ask if the page links to multiple candidate files** rather than guessing, and if there is a single unambiguous file, download it and state plainly what was pulled (file name, source URL, format, size) before drafting anything.
 
 Read all provided sources. Apply the logic of the `metadata`, `data-bio`, and `data-dictionary` skills to produce complete drafts for all three tabs simultaneously.
 
@@ -255,3 +257,5 @@ Do not:
 * End the skill without running `python generate_catalog.py`.
 * Refer the user back to a previous step to create the spreadsheet — generate it automatically.
 * Call the whole three-file output "a DataBio" — that name belongs to `DataBio.xlsx` specifically.
+* Guess which file a landing page refers to when it links to multiple candidates — ask first.
+* Draft from a downloaded file without first telling the user exactly what was pulled and from where.

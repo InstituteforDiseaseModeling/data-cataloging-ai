@@ -23,7 +23,10 @@ The user may provide one or more of the following:
 * An existing data dictionary, codebook, or questionnaire
 * A dataset profile from the `profile-dataset` skill
 * Existing documentation (README, protocol, schema)
+* A URL — either a direct link to a downloadable data file, or a link to a page describing the dataset
 * Domain context from the user
+
+If given a URL, resolve it before drafting anything — see `data-bio`'s Step 1 for the full procedure: fetch it, don't guess which file is meant if a page links to several, and if you download a single unambiguous file, state plainly what was pulled before continuing.
 
 **Mode A** (full data available): derive from the actual dataset. Use documentation as supplementary source.
 **Mode B** (documentation only): derive from codebook, questionnaire, or existing variable list. Never invent what the data looks like.

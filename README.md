@@ -42,7 +42,7 @@ Fills just `Metadata.xlsx`'s 18 fields. Useful when the data biography or data d
 
 ### `data-bio`
 
-Fills just `DataBio.xlsx`'s 22 questions — the actual "data biography." This is the most human-judgment-intensive file — consent, equity, and "inappropriate uses" questions are always flagged for human input.
+Fills just `DataBio.xlsx`'s 22 questions — the actual "data biography." This is the most human-judgment-intensive file — consent, equity, and "inappropriate uses" questions are always flagged for human input. Triggers whenever the user mentions filling out a data bio/biography specifically, and runs its own four-step process: draft from available sources → ask only what needs human input → walk through each section (A–F) for approval, revising until you sign off → generate `DataBio.xlsx` for you to grab.
 
 ### `data-dictionary`
 
@@ -74,6 +74,7 @@ Resolve these before treating a catalog as final — check every yellow cell's c
 python generate_catalog.py                                   # reads ./catalog_draft.json
 python generate_catalog.py --input path/to/draft.json
 python generate_catalog.py --input draft.json --output-dir out/
+python generate_catalog.py --only databio                    # just one file, e.g. from the data-bio skill
 ```
 
 Requires `openpyxl` (`pip install openpyxl`). Templates are resolved relative to the script's own location, so it works from any working directory as long as `catalog_draft.json` (or `--input`) is reachable.
