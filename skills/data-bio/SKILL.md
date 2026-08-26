@@ -1,14 +1,16 @@
 # Complete Data Bio Tab
 
-Use this skill when the user wants to fill the "Data Bio" sheet of `DataBio.xlsx`.
+Use this skill when the user wants to fill the "DataBio" sheet of `DataProfile.xlsx`.
 
-The Data Bio sheet contains 22 narrative questions across six sections (A–F) adapted from the We All Count Data Biography framework. It captures dataset purpose, provenance, collection methods, coverage, consent, and quality — with a focus on equity, ethics, and responsible data use.
+The DataBio sheet contains 22 narrative questions across six sections (A–F) adapted from the We All Count Data Biography framework. It captures dataset purpose, provenance, collection methods, coverage, consent, and quality — with a focus on equity, ethics, and responsible data use.
 
-This tab is the most human-judgment-intensive of the three catalog files. This skill extracts as much as possible from available documentation, but it will not guess on equity, consent, or representativeness questions — those require the data owner or steward.
+This tab is the most human-judgment-intensive of the catalog files. This skill extracts as much as possible from available documentation, but it will not guess on equity, consent, or representativeness questions — those require the data owner or steward.
 
-Note: "Data Biography" is this file specifically — the 22 narrative questions, a framework term from We All Count. It is not a name for the whole catalog (Metadata + DataBio + DataDict); see the `catalog-dataset` skill if the user wants all three filled together.
+`DataProfile.xlsx` has two sheets: "DataBio" (this skill) and "Metadata" (the `metadata` skill). Both skills write into the *same* output file, each owning its own sheet — see "Output format" below for how that's handled. `DataDict.xlsx` is a separate file, out of scope for this skill.
 
-`DataBio.xlsx` has five columns: `Section | Question | Clarification/example | Select from common dropdown options or write in: | Notes/Comments`. Most questions (Q2–Q12, Q14, Q16–Q21) are backed by a controlled vocabulary on the workbook's "Lists" sheet, exposed as an Excel dropdown on the answer column — but the dropdown prompt itself says "Choose from the list, or type your own answer if none fit," so it's a suggestion, not an enforced constraint. Q1, Q13, Q15, and Q22 have no list and are always open narrative text. See "Controlled vocabulary by question" below for the exact allowed values.
+Note: "Data Biography" is this sheet specifically — the 22 narrative questions, a framework term from We All Count. It is not a name for the whole catalog (Metadata + DataBio + DataDict); see the `catalog-dataset` skill if the user wants everything filled together.
+
+The DataBio sheet has five columns: `Section | Question | Clarification/example | Select from common dropdown options or write in: | Notes/Comments`. That fourth column header is a holdover from an earlier version of the template that had Excel dropdowns backing it — this workbook has no dropdown/validation mechanism at all, so treat "Controlled vocabulary by question" below purely as a style guide for consistency across datasets, not as something enforced by the file. Q1, Q13, Q15, and Q22 have no natural controlled vocabulary and are always open narrative text.
 
 This skill follows a four-step interactive process — draft, ask what needs human input, review section by section, then generate the file — see "Workflow" below. Don't jump straight from drafting to generating the Excel file.
 
@@ -16,7 +18,7 @@ This skill follows a four-step interactive process — draft, ask what needs hum
 
 Use this skill when the user asks to:
 
-* Fill or complete the Data Bio tab in DataBio.xlsx
+* Fill or complete the DataBio tab/sheet in DataProfile.xlsx
 * Draft narrative responses to data biography questions
 * Document dataset purpose, provenance, consent, and quality for a data catalog
 * Generate an equity- and ethics-aware dataset description
@@ -91,7 +93,7 @@ Once all six sections are approved, run:
 python generate_catalog.py --only databio
 ```
 
-This fills `DataBio.xlsx` from `catalog_draft.json` and writes `<Dataset>_DataBio.xlsx`. Tell the user the full path to the file so they can retrieve it.
+This fills the DataBio sheet from `catalog_draft.json` and writes `<Dataset>_DataProfile.xlsx`. If that file already exists (e.g. because the `metadata` skill already ran for this dataset), the DataBio sheet is updated in place without disturbing the Metadata sheet. Tell the user the full path to the file so they can retrieve it.
 
 ## Section A: Dataset Purpose and Intended Use
 
@@ -257,7 +259,7 @@ Auto-fill potential: **Medium (technical limitations)** / **Low (equity and inte
 
 ## Controlled vocabulary by question
 
-When drafting a response for one of these questions, prefer one of its listed values if it fits; otherwise write free text (the template explicitly allows writing in an answer that isn't on the list). Do not force a poor-fitting category — a clear free-text answer beats a mismatched list value.
+These are suggested values for consistency across datasets, not an enforced Excel dropdown (see the note in the intro — this template has no data-validation mechanism). When drafting a response for one of these questions, prefer one of the listed values if it fits; otherwise write free text. Do not force a poor-fitting category — a clear free-text answer beats a mismatched list value.
 
 * **Q2** (why originally collected): Surveillance, Program monitoring, Research, Service delivery, Modeling, Reporting, Evaluation, Multiple purposes, Other
 * **Q3** (current use): Same as original purpose, Surveillance, Program monitoring, Research, Service delivery, Modeling, Reporting, Evaluation, Policy-making, Other
@@ -298,7 +300,7 @@ Q1, Q13, Q15, and Q22 have no controlled vocabulary — always draft open narrat
 
 ## Output format
 
-In chat, organize by section (A–F). For each question, the `response`/`source`/`confidence`/`needs_review` shape below feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. It does not map one-to-one onto the final `DataBio.xlsx` file: `response` goes into the "Select from common dropdown options or write in:" column, and `source` is written directly into the Notes/Comments column (prefixed with the review question when `needs_review` is true). There is no separate confidence column in the deliverable — questions still flagged `needs_review` get a yellow-filled answer cell with an Excel comment instead.
+In chat, organize by section (A–F). For each question, the `response`/`source`/`confidence`/`needs_review` shape below feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. It does not map one-to-one onto the final `DataProfile.xlsx` file: `response` goes into the DataBio sheet's "Select from common dropdown options or write in:" column, and `source` is written directly into the Notes/Comments column (prefixed with the review question when `needs_review` is true). There is no separate confidence column in the deliverable — questions still flagged `needs_review` get a yellow-filled answer cell with an Excel comment instead.
 
 The `source` field is a plain-language attribution, not just a citation, since a reader opening the file cold has no visibility into the drafting/review conversation. Compose it as:
 
@@ -460,7 +462,7 @@ Priority guidance:
 
 ## Relationship to other skills
 
-Use this skill when the user asks specifically about a data bio/biography. If the user wants metadata and/or a data dictionary filled too, use `catalog-dataset` instead — it runs the same drafting logic for all three files together with its own tiered Q&A, and generates all three Excel files at once.
+Use this skill when the user asks specifically about a data bio/biography. If the user wants metadata and/or a data dictionary filled too, use `catalog-dataset` instead — it runs the same drafting logic for everything together with its own tiered Q&A, and generates both Excel files (`DataProfile.xlsx` and `DataDict.xlsx`) at once.
 
 ## Do not do the following
 

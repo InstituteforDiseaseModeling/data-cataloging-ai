@@ -2,35 +2,40 @@
 generate_catalog.py
 
 Reads catalog_draft.json from the current working directory and fills the
-three catalog template files (Metadata.xlsx, DataBio.xlsx, DataDict.xlsx)
-found alongside this script, producing three dataset-specific outputs:
+catalog template files found alongside this script:
 
-    <Dataset>_Metadata.xlsx
-    <Dataset>_DataBio.xlsx
+    DataProfile.xlsx  (sheets: "Metadata" and "DataBio")
+    DataDict.xlsx
+
+producing dataset-specific outputs:
+
+    <Dataset>_DataProfile.xlsx
     <Dataset>_DataDict.xlsx
+
+The Metadata and DataBio skills are separate, but they write into the two
+sheets of the *same* DataProfile.xlsx output file. If that output file
+already exists (e.g. one skill already ran), it's loaded and updated in
+place rather than overwritten from the blank template, so filling one sheet
+never clobbers the other.
 
 Usage:
     python generate_catalog.py
     python generate_catalog.py --input path/to/catalog_draft.json
     python generate_catalog.py --input draft.json --output-dir out/
-    python generate_catalog.py --only databio            # just DataBio.xlsx
+    python generate_catalog.py --only databio            # just the DataBio sheet
     python generate_catalog.py --only metadata,datadict   # any subset
 """
 
 import json
-import re
 import sys
-import zipfile
 from pathlib import Path
-from xml.etree import ElementTree as ET
 
 from openpyxl import load_workbook
 from openpyxl.comments import Comment
 from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 
 SCRIPT_DIR = Path(__file__).resolve().parent
-TEMPLATE_METADATA = SCRIPT_DIR / "Metadata.xlsx"
-TEMPLATE_DATABIO = SCRIPT_DIR / "DataBio.xlsx"
+TEMPLATE_DATAPROFILE = SCRIPT_DIR / "DataProfile.xlsx"
 TEMPLATE_DATADICT = SCRIPT_DIR / "DataDict.xlsx"
 
 REVIEW_FILL = PatternFill("solid", fgColor="FFE699")
@@ -46,118 +51,69 @@ DATADICT_KEYS = [
     "numerator", "denominator", "sensitive", "data_quality_notes",
 ]
 
+# Metadata sheet: fields end at row 19 ("Related dataset location(s)"); row 20
+# is the "To Be Completed by Modeling Technology Team" banner, and rows 21-23
+# (Storage/repository location, Data steward, Data Catalog location) are that
+# team's responsibility, not this skill's -- never write to those rows.
+METADATA_FIRST_ROW = 3
+METADATA_LAST_ROW = 19
+
 
 def _review_comment(entry, fallback="Needs human review before finalizing."):
     text = entry.get("review_notes") or fallback
     return Comment(text, "Catalog generator")
 
 
-# ── Metadata.xlsx ───────────────────────────────────────────────────────────
-def fill_metadata(data, output_dir, base_name):
-    if not TEMPLATE_METADATA.exists():
-        sys.exit(f"ERROR: template not found: {TEMPLATE_METADATA}")
+def _load_or_copy_dataprofile(output_path):
+    if not TEMPLATE_DATAPROFILE.exists():
+        sys.exit(f"ERROR: template not found: {TEMPLATE_DATAPROFILE}")
+    if output_path.exists():
+        return load_workbook(output_path)
+    return load_workbook(TEMPLATE_DATAPROFILE)
 
-    wb = load_workbook(TEMPLATE_METADATA)
+
+def fill_metadata_sheet(wb, data):
     ws = wb["Metadata"]
-
-    for i, entry in enumerate(data.get("metadata", [])):
-        row = 4 + i
-        cell = ws.cell(row=row, column=3, value=entry.get("value", ""))
+    entries = data.get("metadata", [])
+    max_entries = METADATA_LAST_ROW - METADATA_FIRST_ROW + 1
+    for i, entry in enumerate(entries[:max_entries]):
+        row = METADATA_FIRST_ROW + i
+        cell = ws.cell(row=row, column=2, value=entry.get("value", ""))
         if entry.get("needs_review"):
             cell.fill = REVIEW_FILL
             cell.comment = _review_comment(entry)
-
-    output_path = output_dir / f"{base_name}_Metadata.xlsx"
-    wb.save(output_path)
-    return output_path
+    return wb
 
 
-# ── DataBio.xlsx (must preserve the Lists-sheet dropdown validation) ───────
-def _sheet_xml_target(xlsx_path, sheet_title):
-    with zipfile.ZipFile(xlsx_path) as z:
-        wb_xml = z.read("xl/workbook.xml").decode("utf-8")
-        rels_xml = z.read("xl/_rels/workbook.xml.rels").decode("utf-8")
-
-    ns = {
-        "m": "http://schemas.openxmlformats.org/spreadsheetml/2006/main",
-        "r": "http://schemas.openxmlformats.org/officeDocument/2006/relationships",
-    }
-    wb_root = ET.fromstring(wb_xml)
-    rid = None
-    for sheet in wb_root.find("m:sheets", ns):
-        if sheet.get("name") == sheet_title:
-            rid = sheet.get(f"{{{ns['r']}}}id")
-            break
-    if rid is None:
-        raise ValueError(f"Sheet {sheet_title!r} not found in {xlsx_path}")
-
-    rels_root = ET.fromstring(rels_xml)
-    for rel in rels_root:
-        if rel.get("Id") == rid:
-            target = rel.get("Target")
-            # Target is normally relative to xl/ (e.g. "worksheets/sheet1.xml"),
-            # but some writers emit a package-absolute path ("/xl/worksheets/sheet1.xml").
-            return target[1:] if target.startswith("/") else f"xl/{target}"
-
-    raise ValueError(f"Relationship {rid!r} not found in {xlsx_path}")
-
-
-def _restore_data_validation(template_path, output_path, sheet_title="Data Bio"):
-    """openpyxl drops the extLst (x14:dataValidation dropdowns) on save.
-    Splice the original template's extLst and worksheet namespaces back into
-    the saved output so the dropdowns survive."""
-    template_sheet = _sheet_xml_target(template_path, sheet_title)
-    with zipfile.ZipFile(template_path) as tz:
-        template_xml = tz.read(template_sheet).decode("utf-8")
-
-    ext_match = re.search(r"<extLst>.*</extLst>", template_xml, re.DOTALL)
-    if not ext_match:
-        return  # template has no data validation to preserve
-
-    root_match = re.search(r"<worksheet[^>]*>", template_xml)
-    template_root_elem = root_match.group(0)
-    ext_block = ext_match.group(0)
-
-    output_sheet = _sheet_xml_target(output_path, sheet_title)
-    with zipfile.ZipFile(output_path) as oz:
-        entries = {name: oz.read(name) for name in oz.namelist()}
-
-    output_xml = entries[output_sheet].decode("utf-8")
-    output_xml = re.sub(r"<worksheet[^>]*>", template_root_elem, output_xml, count=1)
-    output_xml = output_xml.replace("</worksheet>", f"{ext_block}</worksheet>")
-    entries[output_sheet] = output_xml.encode("utf-8")
-
-    with zipfile.ZipFile(output_path, "w", zipfile.ZIP_DEFLATED) as oz:
-        for name, content in entries.items():
-            oz.writestr(name, content)
-
-
-def fill_databio(data, output_dir, base_name):
-    import shutil
-
-    if not TEMPLATE_DATABIO.exists():
-        sys.exit(f"ERROR: template not found: {TEMPLATE_DATABIO}")
-
-    output_path = output_dir / f"{base_name}_DataBio.xlsx"
-    shutil.copy(TEMPLATE_DATABIO, output_path)
-
-    wb = load_workbook(output_path)
-    ws = wb["Data Bio"]
-
+def fill_databio_sheet(wb, data):
+    ws = wb["DataBio"]
     for i, entry in enumerate(data.get("data_bio", [])):
         row = 3 + i
         answer_cell = ws.cell(row=row, column=4, value=entry.get("response", ""))
 
-        notes = f"Source: {entry.get('source', '')}" if entry.get("source") else ""
+        notes = entry.get("source", "")
         if entry.get("needs_review"):
             flag = entry.get("review_notes") or "Needs human review."
             notes = f"⚠ Needs review — {flag}\n{notes}".strip()
             answer_cell.fill = REVIEW_FILL
             answer_cell.comment = _review_comment(entry)
         ws.cell(row=row, column=5, value=notes)
+    return wb
+
+
+def fill_dataprofile(data, output_dir, base_name, sheets):
+    """sheets is a subset of {"metadata", "databio"} -- which sheet(s) to
+    (re)fill in this run. The other sheet, if already present in an existing
+    output file, is left untouched."""
+    output_path = output_dir / f"{base_name}_DataProfile.xlsx"
+    wb = _load_or_copy_dataprofile(output_path)
+
+    if "metadata" in sheets:
+        fill_metadata_sheet(wb, data)
+    if "databio" in sheets:
+        fill_databio_sheet(wb, data)
 
     wb.save(output_path)
-    _restore_data_validation(TEMPLATE_DATABIO, output_path)
     return output_path
 
 
@@ -234,15 +190,14 @@ def main():
     output_dir.mkdir(parents=True, exist_ok=True)
     base_name = data.get("dataset_name", "Dataset").replace(" ", "_")
 
-    fillers = {
-        "metadata": ("Metadata", fill_metadata),
-        "databio": ("DataBio", fill_databio),
-        "datadict": ("DataDict", fill_datadict),
-    }
-    for target in targets:
-        label, fill_fn = fillers[target]
-        path = fill_fn(data, output_dir, base_name)
-        print(f"{label} saved: {path.resolve()}")
+    dataprofile_sheets = {t for t in targets if t in ("metadata", "databio")}
+    if dataprofile_sheets:
+        path = fill_dataprofile(data, output_dir, base_name, dataprofile_sheets)
+        print(f"DataProfile saved ({', '.join(sorted(dataprofile_sheets))}): {path.resolve()}")
+
+    if "datadict" in targets:
+        path = fill_datadict(data, output_dir, base_name)
+        print(f"DataDict saved: {path.resolve()}")
 
 
 if __name__ == "__main__":

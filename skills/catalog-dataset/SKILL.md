@@ -1,17 +1,17 @@
 # Catalog a Dataset
 
-Use this skill when the user wants to generate a full dataset catalog — filling all three files: `Metadata.xlsx` (18 fields), `DataBio.xlsx` (22 data biography questions), and `DataDict.xlsx` (one row per variable).
+Use this skill when the user wants to generate a full dataset catalog — filling `DataProfile.xlsx` (its "Metadata" sheet, 17 fields, and its "DataBio" sheet, 22 data biography questions) and `DataDict.xlsx` (one row per variable).
 
-**A note on terminology:** "Data Biography" refers specifically to the 22 narrative questions in `DataBio.xlsx` (see the `data-bio` skill) — a framework term from We All Count for the equity/provenance-focused contextual questions, not a name for the whole three-file bundle. This skill produces a **dataset catalog** (metadata + data biography + data dictionary together), not "a DataBio." Keep this distinction in your own language when talking to the user, too.
+**A note on terminology:** "Data Biography" refers specifically to the 22 narrative questions on `DataProfile.xlsx`'s DataBio sheet (see the `data-bio` skill) — a framework term from We All Count for the equity/provenance-focused contextual questions, not a name for the whole catalog. This skill produces a **dataset catalog** (metadata + data biography + data dictionary together), not "a DataBio." Keep this distinction in your own language when talking to the user, too.
 
-This skill is the primary entry point for data cataloging. It drafts all three files from available sources, collects missing information from the user in a single structured Q&A, incorporates the answers, and automatically generates three formatted Excel files — no separate spreadsheet step required.
+This skill is the primary entry point for data cataloging. It drafts everything from available sources, collects missing information from the user in a single structured Q&A, incorporates the answers, and automatically generates two formatted Excel files — no separate spreadsheet step required.
 
 ## When to use this skill
 
 Use this skill when the user asks to:
 
 * Fully catalog a dataset — metadata, data biography, and data dictionary together
-* Generate Metadata.xlsx, DataBio.xlsx, and DataDict.xlsx in one pass
+* Generate DataProfile.xlsx and DataDict.xlsx in one pass
 * Run all three tabs (metadata, data bio, variables) at once
 
 ## Inputs
@@ -59,9 +59,9 @@ Mode: [A / B]
 Sources used: [list]
 
                     METADATA   DATA BIO   VARIABLES   TOTAL
-High confidence       X / 18     X / 22    X / N
-Medium confidence     X / 18     X / 22    X / N
-Low confidence        X / 18     X / 22    X / N       → needs review
+High confidence       X / 17     X / 22    X / N
+Medium confidence     X / 17     X / 22    X / N
+Low confidence        X / 17     X / 22    X / N       → needs review
 ```
 
 High confidence = auto-filled, well-supported, no review needed.
@@ -79,9 +79,11 @@ This phase collects missing information in three separate rounds, one tier at a 
 
 **Tier definitions**
 
-* **Critical** — required for the catalog to be usable or compliant: data owner, data steward/contact, storage location, access level/DUA terms, consent details (Q16–Q19), inappropriate uses (Q4)
+* **Critical** — required for the catalog to be usable or compliant: data owner/point of contact, Data Sharing Agreement URL, consent details (Q16–Q19), inappropriate uses (Q4)
 * **Important** — needed for catalog users to understand and use the dataset: version, citation/DOI, current use (Q3), data chain (Q8), methodology details, equity caveats (Q22)
 * **Optional** — enhances the record but not blocking: update frequency, related datasets, enumerator training, blinding details, variable coding edge cases
+
+Never ask about Storage/repository location, Data steward, or Data Catalog location — those three Metadata fields are out of scope for this skill (see `metadata`'s "Fields out of scope for this skill"); leave them blank in every case.
 
 **Question format by confidence level**
 
@@ -135,17 +137,16 @@ After `catalog_draft.json` is updated, run:
 python generate_catalog.py
 ```
 
-The script reads `catalog_draft.json` from the current working directory and fills the three template files (`Metadata.xlsx`, `DataBio.xlsx`, `DataDict.xlsx`) from the project root, writing three dataset-specific outputs named from `dataset_name`:
+The script reads `catalog_draft.json` from the current working directory and fills the template files (`DataProfile.xlsx`, `DataDict.xlsx`) from the project root, writing dataset-specific outputs named from `dataset_name`:
 
-* `<Dataset>_Metadata.xlsx`
-* `<Dataset>_DataBio.xlsx`
+* `<Dataset>_DataProfile.xlsx` — both the Metadata sheet (17 fields) and DataBio sheet (22 questions), filled together in one pass since this skill drafts both at once
 * `<Dataset>_DataDict.xlsx`
 
-Fields and questions still flagged `needs_review` after the Q&A rounds appear with a yellow-filled cell and an Excel comment carrying the review question, rather than a separate column — none of the three templates have source/confidence/needs_review columns.
+Fields and questions still flagged `needs_review` after the Q&A rounds appear with a yellow-filled cell and an Excel comment carrying the review question, rather than a separate column — neither template has source/confidence/needs_review columns.
 
 If `generate_catalog.py` is not found in the working directory, alert the user and provide its expected path: the project root of the data-cataloging-ai repository.
 
-Tell the user the full paths to all three generated Excel files.
+Tell the user the full paths to both generated Excel files.
 
 ---
 
@@ -204,25 +205,26 @@ Write this file at the start of Phase 1 and update it at the end of Phase 2.
 }
 ```
 
-The metadata array must contain exactly these 18 fields in order:
+The metadata array must contain exactly these 17 fields in order (see the `metadata` skill for full derivation guidance on each):
 1. Dataset title / name
 2. Dataset short description
-3. Dataset version
-4. Date catalog last updated
+3. Subject(s)
+4. Dataset version
 5. Data provider / source organization
-6. Extract / release date
+6. Production Date
 7. Update frequency / rounds / waves
-8. Data owner
-9. Data steward / primary contact
-10. File inventory
-11. Storage / repository location
-12. Access level / restrictions
-13. Citation / attribution
-14. Sensitive data classification
-15. Geographic coverage
-16. Temporal coverage / reference period
-17. Unit of observation / granularity
-18. Related dataset location(s)
+8. Data owner / Point of contact
+9. File inventory
+10. Citation / attribution
+11. Sensitive data classification
+12. Data Sharing Agreement (URL, where applicable)
+13. Geographic coverage
+14. Unit of observation / granularity
+15. Temporal Coverage (Start)
+16. Temporal Coverage (End)
+17. Related dataset location(s)
+
+Do not include Storage/repository location, Data steward, or Data Catalog location in this array — those three fields are out of scope (a different team fills them in later) and must be left blank in the output.
 
 The data_bio array must contain exactly 22 entries covering Q1–Q22 across sections A–F.
 
@@ -236,14 +238,13 @@ The variables array contains one entry per variable. Include all variables finda
 * Always present Phase 1 summary with the High / Medium / Low confidence breakdown per tab before asking any questions.
 * Present tiers one at a time in order: Critical → Important → Optional. Never combine tiers in one message.
 * Show the inferred draft value for Medium confidence questions. Ask open-ended for Low confidence questions.
-* Always set "Date catalog last updated" (the Metadata field) to today's date automatically.
 * Update `catalog_draft.json` after each round before presenting the next round.
 * If the user skips Critical questions, generate the Excel files anyway — but yellow-flag all unanswered Critical fields in the output.
 * Always end this skill by running `python generate_catalog.py` and confirming the output file paths.
 
 ## Relationship to other skills
 
-The `metadata`, `data-bio`, and `data-dictionary` skills can be run individually when the user only needs one file. Use `catalog-dataset` when the user wants all three (the full catalog) in a single workflow with automatic Excel output.
+The `metadata`, `data-bio`, and `data-dictionary` skills can be run individually when the user only needs one sheet/file — they write into the same `<Dataset>_DataProfile.xlsx` output without clobbering each other's sheet (see `generate_catalog.py`'s load-if-exists behavior). Use `catalog-dataset` when the user wants everything (the full catalog) in a single workflow with automatic Excel output.
 
 ## Do not do the following
 
@@ -252,10 +253,11 @@ Do not:
 * Show a guessed value for Low confidence fields — ask open-ended instead.
 * Skip showing the inferred value for Medium confidence fields — always show it and ask for confirmation.
 * Generate the Excel before all three rounds are complete (or the user has explicitly skipped a round).
-* Invent data owner, steward, consent details, storage location, or access conditions.
+* Invent a data owner/point of contact, consent details, or Data Sharing Agreement terms.
+* Ask about or fill Storage/repository location, Data steward, or Data Catalog location — out of scope, a different team's job.
 * Skip writing `catalog_draft.json` before the Q&A.
 * End the skill without running `python generate_catalog.py`.
 * Refer the user back to a previous step to create the spreadsheet — generate it automatically.
-* Call the whole three-file output "a DataBio" — that name belongs to `DataBio.xlsx` specifically.
+* Call the output "a DataBio" — that name belongs to the DataBio sheet specifically, not the whole catalog.
 * Guess which file a landing page refers to when it links to multiple candidates — ask first.
 * Draft from a downloaded file without first telling the user exactly what was pulled and from where.
