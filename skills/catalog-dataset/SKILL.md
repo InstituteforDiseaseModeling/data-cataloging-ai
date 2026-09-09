@@ -1,6 +1,6 @@
 # Catalog a Dataset
 
-Use this skill when the user wants to fill out a dataset's **data profile** — `DataProfile.xlsx`'s "Metadata" sheet (17 fields) and "DataBio" sheet (22 data biography questions), drafted and reviewed together in one workflow.
+Use this skill when the user wants to fill out a dataset's **data profile** — `DataProfile.xlsx`'s "Metadata" sheet (18 fields) and "DataBio" sheet (22 data biography questions), drafted and reviewed together in one workflow.
 
 `DataDict.xlsx` (the data dictionary, one row per variable) is a **separate, optional deliverable**, not an automatic part of this skill's output. A dataset can have more than one data dictionary — e.g., a bundle of several distinct files may warrant a dictionary per file rather than one combined file — so it's never assumed. See "Offering the data dictionary" below for when and how to bring it up.
 
@@ -92,73 +92,49 @@ Mode: [A / B]
 Sources used: [list]
 
                     METADATA   DATA BIO   [VARIABLES]   TOTAL
-High confidence       X / 17     X / 22     [X / N]
-Medium confidence     X / 17     X / 22     [X / N]
-Low confidence        X / 17     X / 22     [X / N]       → needs review
+High confidence       X / 18     X / 22     [X / N]
+Medium confidence     X / 18     X / 22     [X / N]
+Low confidence        X / 18     X / 22     [X / N]       → needs review
 ```
 
 High confidence = auto-filled, well-supported, no review needed.
 Medium confidence = auto-filled with a best guess that needs human confirmation.
 Low confidence = could not determine from sources; open question for human.
 
-Fields at Medium and Low confidence are presented to the user in Phase 2.
+Every field and question gets reviewed in Phase 2, regardless of confidence — Confidence just tells the researcher where to look most closely.
 ```
 
 ---
 
-### Phase 2: Human Q&A — three sequential rounds
+### Phase 2: Review — Metadata as a whole, then DataBio section by section
 
-This phase collects missing information in three separate rounds, one tier at a time. Present each round, wait for the user's response, then move to the next. Do not combine tiers into a single message.
+No tiers, no rounds split by priority. Two passes, in order:
 
-**Tier definitions**
+**Pass 1 — Metadata, all at once**
 
-* **Critical** — required for the catalog to be usable or compliant: data owner/point of contact, Data Location(s), Data Sharing Agreement URL, consent details (Q16–Q19), inappropriate uses (Q4)
-* **Important** — needed for catalog users to understand and use the dataset: version, citation/DOI, current use (Q3), data chain (Q8), methodology details, equity caveats (Q22)
-* **Optional** — enhances the record but not blocking: update frequency, related datasets, enumerator training, blinding details, and (if the data dictionary was offered and accepted) variable coding edge cases
+Present all 18 fields together as one table (mirroring `metadata`'s own Output format: `Field | Draft value | Source | Confidence | Needs review`) — every field, not just the ones flagged `needs_review`. Ask the researcher to approve as-is or correct any field(s). Apply corrections, show the corrected table again if anything changed, and don't move to Pass 2 until they approve.
 
-Never ask about Storage/repository location, Data steward, or Data Catalog location — those three Metadata fields are out of scope for this skill (see `metadata`'s "Fields out of scope for this skill"); leave them blank in every case.
+Never ask about Storage/repository location, Data steward, or Data Catalog location — those three fields are out of scope for this skill (see `metadata`'s "Fields out of scope for this skill"); leave them blank in every case.
 
-**Question format by confidence level**
+**Pass 2 — DataBio, section by section**
 
-How to phrase each question depends on the confidence of the auto-filled draft:
+Present sections A through F one at a time, exactly as `data-bio`'s own "Section-by-section review and approval" step: for each section, show every question's `response`, `confidence`, and `source` — not just flagged ones — ask the researcher to approve as-is or request changes, and repeat until they approve that section before moving to the next. Do not present more than one section at a time.
 
-* **Medium confidence** (a best guess exists): Show the inferred value and ask the user to confirm or correct it. Example:
+**If the data dictionary was offered and accepted**, add a third pass for `variables` — one table of all drafted rows (mirroring `data-dictionary`'s own Output format), approve as-is or correct, in one pass.
+
+**Phrasing draft values during either pass**
+
+* A Medium-confidence draft: show the inferred value and ask the researcher to confirm or correct it. Example:
   > `[METADATA: Geographic coverage]` I inferred: *"Bangladesh; 13 poorest districts concentrated in the northern monga region."* Does this look right? If not, please correct it.
+* A Low-confidence or blank item: ask an open-ended question with no suggested answer. Example:
+  > `[METADATA: IDM Data owner]` Who is the IDM person or team with final decision-making authority over this dataset's access and use?
 
-* **Low confidence** (no reasonable guess): Ask an open-ended question with no suggested answer. Example:
-  > `[METADATA: Data owner]` Who is the institution or person with final decision-making authority over this dataset's access and use?
+**Incorporating answers**
 
-**Round 1: Critical questions**
-
-Present only Critical fields needing review. Number them starting from 1. End with:
-
-> "Answer by number. Write 'skip' to leave a Critical field/question blank — for Metadata, that means a blank Response cell; for DataBio, it means a blank Answer with Confidence set to 'Needs human input'. When you're ready, I'll move on to Important questions."
-
-Wait for the user's response before presenting Round 2.
-
-**Round 2: Important questions**
-
-After incorporating Round 1 answers, present Important fields. Number them starting from 1. End with:
-
-> "Answer by number. Write 'skip' for anything you don't know. When you're ready, I'll finish with Optional questions."
-
-Wait for the user's response before presenting Round 3.
-
-**Round 3: Optional questions**
-
-After incorporating Round 2 answers, present Optional fields. Number them starting from 1. End with:
-
-> "Answer by number, or write 'skip all' to skip these entirely. I'll generate the Excel files after this."
-
-Wait for the user's response, then proceed to Phase 3.
-
-**Incorporating answers after each round**
-
-After each round's response, update `catalog_draft.json` before presenting the next round:
-* For answered questions: set `value` to the human's answer, `source` to `"Human input"`, `needs_review` to `false`, clear `review_notes`
-* For skipped or unanswered fields: keep `needs_review: true`, keep existing `value`
-
-If the user says "skip all" or "unknown for all" for any round, note it, keep all fields in that tier flagged, and move on.
+Update `catalog_draft.json` as corrections come in, before showing the next table/section:
+* For anything the researcher corrects: set `value`/`response` to their answer, `source` to `"Human input."`, `needs_review` to `false`, clear `review_notes`.
+* For anything approved as-is that was AI-drafted: compose `source` per `data-bio`'s Output format convention ("Generated by AI, reviewed and approved by {reviewer}." + `" Source: {doc}"` if applicable) — this is what actually shows in the DataBio sheet's Source column; for Metadata it's harmless bookkeeping only, since that sheet has no Source column.
+* For anything the researcher explicitly skips: leave `needs_review: true`, keep the existing `value`/`response` (blank or drafted) as-is, and move on rather than blocking.
 
 ---
 
@@ -190,7 +166,7 @@ Because that folder is synced, saving there is the entire "delivery" step — On
 Neither sheet uses a yellow-filled cell or Excel comment for unresolved items — this data gets synced into Databricks, and formatting doesn't survive that sync. The two sheets handle it differently, and in both cases what actually drives the display is whether the field/question ended up genuinely **blank**, not the `needs_review` flag itself:
 
 * Metadata sheet (`Field`/`Response` only): an unresolved field is just a blank Response cell.
-* DataBio sheet (adds `Confidence (AI-assisted only)` and `Source (AI-assisted only)`): a blank Answer shows Confidence as "Needs human input" and Source carrying the `review_notes` explanation of what's needed. A question that was drafted with real content but left unanswered after the Q&A rounds (`needs_review: true`, `value`/`response` non-blank per "Incorporating answers after each round" above) instead shows its original drafted confidence — the Excel file doesn't currently distinguish "drafted and skipped" from "drafted and confirmed" the way it distinguishes blank from populated. Point this out to the researcher in the summary if any Critical/Important field was skipped this way, since it won't be visually obvious in the spreadsheet.
+* DataBio sheet (adds `Confidence (AI-Assisted only)` and `Source (AI-Assisted only)`): a blank Answer shows Confidence as "Needs human input" and Source carrying the `review_notes` explanation of what's needed. A question that was drafted with real content but left unanswered after Phase 2 (`needs_review: true`, `value`/`response` non-blank per "Incorporating answers" above) instead shows its original drafted confidence — the Excel file doesn't currently distinguish "drafted and skipped" from "drafted and confirmed" the way it distinguishes blank from populated. Point this out to the researcher in the summary if anything important was skipped this way, since it won't be visually obvious in the spreadsheet.
 
 If Step 0 wasn't completed (no config, or `$CLAUDE_PLUGIN_ROOT`/`$CLAUDE_PLUGIN_DATA` unset because this isn't running as an installed plugin), the script's own error message explains what's missing — surface that message to the researcher rather than guessing at a fix.
 
@@ -255,24 +231,25 @@ Write this file at the start of Phase 1 and update it at the end of Phase 2.
 
 `variables` is **only present at all if the data dictionary was offered and accepted** (see "Offering the data dictionary" above) — omit the key entirely otherwise, don't write an empty array. If separate per-file dictionaries were chosen for a multi-file bundle, each component gets its own small JSON with just `dataset_name` and `variables` (no `metadata`/`data_bio` needed in those files).
 
-The metadata array must contain exactly these 17 fields in order (see the `metadata` skill for full derivation guidance on each):
+The metadata array must contain exactly these 18 fields in order (see the `metadata` skill for full derivation guidance on each):
 1. Dataset title / name
 2. Dataset short description
 3. Subject(s)
 4. Dataset version
 5. Data provider / source organization
-6. Production Date
-7. Update frequency / rounds / waves
-8. Data owner / Point of contact
-9. Data Location(s)
-10. Citation / attribution
-11. Sensitive data classification
-12. Data Sharing Agreement (URL, where applicable)
-13. Geographic coverage
-14. Unit of observation / granularity
-15. Temporal Coverage (Start)
-16. Temporal Coverage (End)
-17. Related dataset location(s)
+6. Data Provider Point of Contact
+7. Production Date
+8. Update frequency / rounds / waves
+9. IDM Data owner
+10. Data Location(s)
+11. Citation / attribution
+12. Sensitive data classification
+13. Data Sharing Agreement (URL, where applicable)
+14. Geographic coverage
+15. Unit of observation / granularity
+16. Temporal Coverage (Start)
+17. Temporal Coverage (End)
+18. Related dataset location(s)
 
 Do not include Storage/repository location, Data steward, or Data Catalog location in this array — those three fields are out of scope (a different team fills them in later) and must be left blank in the output.
 
@@ -286,10 +263,10 @@ If present, the variables array contains one entry per variable. Include all var
 
 * Always write `catalog_draft.json` before the Q&A — auto-filled content is never lost regardless of conversation length.
 * Always present Phase 1 summary with the High / Medium / Low confidence breakdown per tab before asking any questions.
-* Present tiers one at a time in order: Critical → Important → Optional. Never combine tiers in one message.
-* Show the inferred draft value for Medium confidence questions. Ask open-ended for Low confidence questions.
-* Update `catalog_draft.json` after each round before presenting the next round.
-* If the user skips Critical questions, generate the Excel file(s) anyway. Never fill an unresolved field/question with placeholder text — a Critical item with no draft at all stays blank (plus "Needs human input" Confidence on the DataBio sheet); one that had a real draft but was skipped keeps that draft as-is (see the caveat in "Phase 3: Generate Excel" about this not being visually flagged).
+* Present Metadata as one full table (Pass 1), then DataBio one section at a time (Pass 2) — never combine Pass 1 and a DataBio section, or two DataBio sections, into a single message.
+* Show the inferred draft value for Medium confidence questions. Ask open-ended for Low-confidence or blank items.
+* Update `catalog_draft.json` after each pass/section before presenting the next.
+* If the user skips something, generate the Excel file(s) anyway. Never fill an unresolved field/question with placeholder text — an item with no draft at all stays blank (plus "Needs human input" Confidence on the DataBio sheet); one that had a real draft but was skipped keeps that draft as-is (see the caveat in "Phase 3: Generate Excel" about this not being visually flagged).
 * Once Mode A is confirmed, always ask about the data dictionary before drafting — never assume the answer either way.
 * Always end this skill by running `generate_catalog.py` for the profile (and, if accepted, the data dictionary/dictionaries) and confirming every output file path.
 * Complete Step 0 before Phase 1 — do not assume the templates or dataset folder location.
@@ -301,11 +278,11 @@ The `metadata` and `data-bio` skills can be run individually when the user only 
 ## Do not do the following
 
 Do not:
-* Mix tiers — present Critical, Important, and Optional as separate rounds, one at a time.
+* Combine Pass 1 (Metadata) and any DataBio section into one message, or combine two DataBio sections together.
 * Show a guessed value for Low confidence fields — ask open-ended instead.
 * Skip showing the inferred value for Medium confidence fields — always show it and ask for confirmation.
-* Generate the Excel before all three rounds are complete (or the user has explicitly skipped a round).
-* Invent a data owner/point of contact, consent details, or Data Sharing Agreement terms.
+* Generate the Excel before Metadata is approved and every DataBio section is approved (or the user has explicitly skipped something).
+* Invent an IDM Data owner, Data Provider Point of Contact, consent details, or Data Sharing Agreement terms.
 * Ask about or fill Storage/repository location, Data steward, or Data Catalog location — out of scope, a different team's job.
 * Skip writing `catalog_draft.json` before the Q&A.
 * End the skill without running `python "$CLAUDE_PLUGIN_ROOT/generate_catalog.py"`.

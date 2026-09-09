@@ -42,11 +42,11 @@ Two one-time steps, no git or code required:
 1. **Sync the Data Profiles folder to your computer.** Open the [Data Profiles SharePoint library](https://bmgf.sharepoint.com/:f:/r/sites/IDMOD/Shared%20Documents/IDM%20Software/Data%20Management%20Strategy/Data%20Profiles?d=wec03896e3ffb400f86111a2f0e8c9bf2&csf=1&web=1&e=0IeHLQ) and click **"Add shortcut to OneDrive"** (toolbar, or right-click the folder), then confirm **"My files"** when prompted for the destination. It'll then appear under "OneDrive - Gates Foundation" in File Explorer within a minute or two — copy its path; you'll need it below.
 2. **Install the skills in Claude Code.** How you do this depends on how you access Claude Code:
 
-   **Claude Desktop app:** Go to **Settings → Plugins → Add**, and enter:
+   **Claude Desktop app:** Go to **Settings → Plugins**, click **Add**, then **Add marketplace**, and enter:
    ```
    InstituteforDiseaseModeling/data-cataloging-ai
    ```
-   Follow the prompts to add the marketplace and install the `data-cataloging-ai` plugin from it. Once installed, enable auto-update for it in that same Plugins settings screen, so future updates reach you automatically.
+   Once the marketplace is added, click the **+** next to it to install the `data-cataloging-ai` plugin. If there is an option to enable auto-update for the plugin on the settings screen, do so for future updates reach you automatically.
 
    **Claude Code CLI (terminal):**
    ```
@@ -92,7 +92,7 @@ Each skill lives in `skills/<name>/SKILL.md`. You may invoke by name (e.g. `/cat
 
 ### `catalog-dataset` — primary entry point
 
-Fills the whole data profile (Metadata + DataBio) in one pass: drafts what it can, asks you about the rest in three rounds (Critical → Important → Optional), then generates the Excel file directly into SharePoint. **Use this by default.**
+Fills the whole data profile (Metadata + DataBio) in one pass: drafts everything, reviews the Metadata table with you as a whole, then walks through DataBio section by section, then generates the Excel file directly into SharePoint. **Use this by default.**
 
 ### `metadata` / `data-bio`
 

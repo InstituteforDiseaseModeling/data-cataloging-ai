@@ -2,11 +2,11 @@
 
 Use this skill when the user wants to fill the "Metadata" sheet of `DataProfile.xlsx`.
 
-The Metadata sheet captures 17 administrative and technical fields that identify a dataset, describe its scope, and record stewardship information. This skill drafts as many fields as possible from available sources and flags what requires human input.
+The Metadata sheet captures 18 administrative and technical fields that identify a dataset, describe its scope, and record stewardship information. This skill drafts as many fields as possible from available sources and flags what requires human input.
 
 `DataProfile.xlsx` has two sheets: "Metadata" (this skill) and "DataBio" (the `data-bio` skill, 22 narrative questions). Both skills write into the *same* output file, each owning its own sheet — see "Output format" below for how that's handled. `DataDict.xlsx` is a separate file, out of scope for this skill.
 
-The Metadata sheet only has two content columns — `Field` and `Response` — in rows 3–19 (row 2 is the header). Below that is a banner row, **"To Be Completed by Modeling Technology Team,"** followed by three fields — Storage/repository location (Databricks URL), Data steward, Data Catalog location (Dataverse URL) — that belong to a different team's downstream process. **Never fill or prompt about those three fields; leave them blank.**
+The Metadata sheet only has two content columns — `Field` and `Response` — in rows 3–20 (row 2 is the header). Below that is a banner row, **"To Be Completed by Modeling Technology Team,"** followed by three fields — Storage/repository location (Databricks URL), Data steward, Data Catalog location (Dataverse URL) — that belong to a different team's downstream process. **Never fill or prompt about those three fields; leave them blank.**
 
 There is no room in the template for source, confidence, or review-flag columns, so this skill tracks that richer context in chat and in `catalog_draft.json` only — nothing about it is surfaced in the file itself. A field the skill and researcher couldn't resolve together is simply left blank in Response; there's no color fill or comment either, since the file gets synced into Databricks and formatting doesn't survive that.
 
@@ -44,7 +44,7 @@ Before drafting, resolve where `DataProfile.xlsx` is — see `catalog-dataset`'s
 
 ## Outputs
 
-A filled draft of all 17 Metadata fields, each with:
+A filled draft of all 18 Metadata fields, each with:
 
 * Draft value, or blank if nothing can be confirmed yet
 * Source (what the value was derived from)
@@ -53,7 +53,7 @@ A filled draft of all 17 Metadata fields, each with:
 
 Followed by a consolidated "Fields for human review" list.
 
-## The 17 metadata fields
+## The 18 metadata fields
 
 ### 1. Dataset title / name
 
@@ -85,37 +85,43 @@ Derive from: paper authorship, protocol header, study acknowledgments, user cont
 
 If multiple organizations are involved, list them. If unclear, flag for review.
 
-### 6. Production Date
+### 6. Data Provider Point of Contact
+
+Derive from: paper corresponding-author/contact info, protocol header, study acknowledgments, user context.
+
+The specific person at the data-providing organization who can be contacted about this dataset — distinct from the organization name itself (field 5) and from the IDM Data owner (field 9, below), which is IDM's own internal contact. If not documented, flag for review.
+
+### 7. Production Date
 
 Derive from: file metadata, documentation, publication or release date, user context.
 
 The date this dataset (or this specific version of it) was produced or released — not the date of underlying data collection, which belongs in the DataBio sheet's Q13. If not provided, flag for review.
 
-### 7. Update frequency / rounds / waves
+### 8. Update frequency / rounds / waves
 
 Derive from: protocol (e.g., "annual survey," "three rounds," "baseline + endline"), documentation.
 
 Use the documentation's own language. If not mentioned, flag for review.
 
-### 8. Data owner / Point of contact
+### 9. IDM Data owner
 
-**Always requires human input.** The person, team, or institution with the most knowledge of the dataset and decision-making authority over its access and use. Do not infer from paper authorship alone.
+**Always requires human input.** The IDM person, team, or partner with the most knowledge of the dataset and decision-making authority over its access and use — distinct from the Data Provider Point of Contact (field 6), which is external. Do not infer from paper authorship alone.
 
-Leave `value` blank. Set `review_notes` to explain what's needed (e.g. "Requires input from data owner or steward — name the person/team with decision-making authority over this dataset's access and use.").
+Leave `value` blank. Set `review_notes` to explain what's needed (e.g. "Requires input — name the IDM person/team with decision-making authority over this dataset's access and use.").
 
-### 9. Data Location(s)
+### 10. Data Location(s)
 
 File location(s) where the data lives (SharePoint, OneDrive, etc.) — this is what a researcher (or this skill, per `catalog-dataset`'s Step 0) fills in, not something for the Modeling Technology Team.
 
 Derive from: the dataset location resolved in Step 0/Mode A (if the dataset was deposited directly in this dataset's SharePoint folder, say so plainly, e.g. "In this folder"; if it lives elsewhere — another SharePoint site, OneDrive, or other storage — use the link the researcher gave or that's recorded in documentation). If no location has been established yet, flag for review and ask directly — this generally can't be inferred, only supplied.
 
-### 10. Citation / attribution
+### 11. Citation / attribution
 
 Derive from: published paper DOI or citation, dataset documentation, user context.
 
 Draft a placeholder if the full citation is not available. Flag if incomplete.
 
-### 11. Sensitive data classification
+### 12. Sensitive data classification
 
 Derive from: `assess-dataset` output (if available), documentation, column names, user context.
 
@@ -125,19 +131,19 @@ Common values: Public, Internal, Restricted, Sensitive, Highly Sensitive.
 
 Use cautious language if uncertain. Always flag for human confirmation.
 
-### 12. Data Sharing Agreement (URL, where applicable)
+### 13. Data Sharing Agreement (URL, where applicable)
 
 Derive from: DUA mentioned in documentation, user context.
 
 If a specific Data Sharing/Use Agreement document or URL is known, provide it. If no DSA applies (e.g., fully public data with no agreement), state "Not applicable." Always flag for human confirmation regardless of what's drafted — do not assume no DSA exists just because none was mentioned in the documentation reviewed.
 
-### 13. Geographic coverage
+### 14. Geographic coverage
 
 Derive from: `assess-dataset` output (if available), documentation, column names, observed values.
 
 Describe countries, regions, administrative levels, or sites. Include the source of the inference and confidence level.
 
-### 14. Unit of observation / granularity
+### 15. Unit of observation / granularity
 
 Derive from: `assess-dataset` output (if available), documentation, dataset structure.
 
@@ -145,19 +151,19 @@ Examples: person, household, health facility, district, country-year, survey clu
 
 Explain the evidence and flag if ambiguous.
 
-### 15. Temporal Coverage (Start)
+### 16. Temporal Coverage (Start)
 
 Derive from: `assess-dataset` output (if available), documentation, date columns in dataset, paper methods sections.
 
 The earliest date or year the dataset covers. Note whether this represents the collection period, reference period, or model time.
 
-### 16. Temporal Coverage (End)
+### 17. Temporal Coverage (End)
 
 Derive from: same sources as Start.
 
 The latest date or year the dataset covers, or "Present" / "Ongoing" if data collection is still active.
 
-### 17. Related dataset location(s)
+### 18. Related dataset location(s)
 
 Derive from: documentation references to upstream, downstream, or companion datasets.
 
@@ -176,7 +182,7 @@ Never fill in, draft, or ask the user about these — they sit below the "To Be 
 * In Mode A: inspect the actual dataset. Use documentation as secondary source.
 * In Mode B: use documentation only. Do not invent dataset characteristics.
 * Distinguish documented facts from inferences. Use language like "appears to" or "likely" for inferences.
-* Never invent data owner/point of contact, DSA terms, or citation.
+* Never invent the IDM Data owner, Data Provider Point of Contact, DSA terms, or citation.
 * Never write to or prompt about the three fields under the "Modeling Technology Team" banner.
 * Mark fields with low confidence as needing review.
 * Do not expose sensitive row-level data.
@@ -204,7 +210,7 @@ In chat, return a markdown table:
 | Field | Draft value | Source | Confidence | Needs review |
 | ----- | ----------- | ------ | ---------- | ------------ |
 
-This `value/source/confidence/needs_review` shape also feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. It does **not** map one-to-one onto the final `DataProfile.xlsx` file: the Metadata sheet only has `Field` and `Response` columns. When the file is generated, each field's `value` goes into Response (rows 3–19) as plain text — blank if `value` is empty. Fields still flagged `needs_review` simply stay blank; there's no color, comment, or extra column carrying that status in this sheet (source/confidence live only in chat and the JSON draft).
+This `value/source/confidence/needs_review` shape also feeds `catalog_draft.json`, which `catalog-dataset` also uses when running this same drafting logic as part of a full data profile. It does **not** map one-to-one onto the final `DataProfile.xlsx` file: the Metadata sheet only has `Field` and `Response` columns. When the file is generated, each field's `value` goes into Response (rows 3–20) as plain text — blank if `value` is empty. Fields still flagged `needs_review` simply stay blank; there's no color, comment, or extra column carrying that status in this sheet (source/confidence live only in chat and the JSON draft).
 
 Because the Metadata and DataBio sheets live in one workbook but are filled by two separate skills, the generator (`python "$CLAUDE_PLUGIN_ROOT/generate_catalog.py" --only metadata`) loads the existing `<Dataset>_DataProfile.xlsx` output if one is already there (e.g. because `data-bio` already ran) and updates just the Metadata sheet in place, rather than overwriting the whole file from the blank template. It writes into the OneDrive-synced SharePoint folder resolved in Step 0, not a local scratch location — always invoke it via `$CLAUDE_PLUGIN_ROOT`, never a bare relative path.
 
@@ -237,6 +243,11 @@ metadata_tab:
     source:
     confidence:
     needs_review:
+  data_provider_point_of_contact:
+    value:
+    source:
+    confidence:
+    needs_review:
   production_date:
     value:
     source:
@@ -247,7 +258,7 @@ metadata_tab:
     source:
     confidence:
     needs_review:
-  data_owner_point_of_contact:
+  idm_data_owner:
     value:
     source:
     confidence:
@@ -312,15 +323,15 @@ What to provide: [what the human should supply]
 
 Priority guidance:
 
-* Critical: data owner/point of contact, Data Location(s), Data Sharing Agreement URL, sensitive data classification
-* Important: version, citation/attribution, geographic coverage, temporal coverage (start/end), unit of observation
+* Critical: IDM Data owner, Data Location(s), Data Sharing Agreement URL, sensitive data classification
+* Important: version, citation/attribution, geographic coverage, temporal coverage (start/end), unit of observation, Data Provider Point of Contact
 * Optional: subject(s), update frequency, related dataset locations
 
 ## Do not do the following
 
 Do not:
 
-* Invent a data owner/point of contact, DSA terms, or citation.
+* Invent an IDM Data owner, Data Provider Point of Contact, DSA terms, or citation.
 * Infer that no Data Sharing Agreement applies just because none was mentioned in documentation.
 * Set sensitive data classification to "Public" without clear evidence.
 * Claim the metadata is complete when review items remain.

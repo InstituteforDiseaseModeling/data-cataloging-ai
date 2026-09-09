@@ -10,11 +10,11 @@ This tab is the most human-judgment-intensive of the catalog files. This skill e
 
 Note: "Data Biography" is this sheet specifically — the 22 narrative questions, a framework term from We All Count. That said, the phrase has historically also been used at this org for the whole data profile (both tabs), from before that terminology was cleaned up — so when a user asks to fill out "a data biography"/"a data bio" without clarifying they mean only the narrative questions, **default to assuming they mean the whole data profile** and use `catalog-dataset` instead. Only use this skill directly when the user explicitly clarifies they want just the narrative tab, not metadata (e.g., "just the data bio questions" or "skip metadata, just the bio"). See "When to use this skill" below.
 
-The DataBio sheet has five columns: `Section | Question | Answer | Confidence (AI-assisted only) | Source (AI-assisted only)`. There is no dropdown/validation mechanism on the Answer column — treat "Controlled vocabulary by question" below purely as a style guide for consistency across datasets, not as something enforced by the file. Q1, Q13, Q15, and Q22 have no natural controlled vocabulary and are always open narrative text.
+The DataBio sheet has five columns: `Section | Question | Answer | Confidence (AI-Assisted only) | Source (AI-Assisted only)`. There is no dropdown/validation mechanism on the Answer column — treat "Controlled vocabulary by question" below purely as a style guide for consistency across datasets, not as something enforced by the file. Q1, Q13, Q15, and Q22 have no natural controlled vocabulary and are always open narrative text.
 
 An earlier version of the template also had a "Clarification/example" column between Question and Answer, giving per-question guidance on what to consider. That column has been intentionally removed from the template — its content now lives in this skill's Section A–F derivation notes below instead, so nothing was lost, it just doesn't clutter the deliverable.
 
-Confidence and Source replace what used to be a single "Notes/Comments" column. Both are headed "(AI-assisted only)" — real header text, not a comment — precisely so a researcher filling the sheet out by hand knows at a glance those two columns aren't for them; they only get populated on rows this skill drafted or touched. This data (not cell color, not Excel comments) is how review status is captured now, since the file gets synced into Databricks and formatting doesn't survive that sync. Every question is drafted by AI and then reviewed and approved by the researcher (section by section, see "Workflow" below) before the file is ever generated, so Confidence normally shows the AI's real drafted confidence (High/Medium/Low) rather than a separate review-status flag. The one exception: a question with a genuinely blank Answer (nothing AI or the researcher could determine) shows Confidence as **"Needs human input"** instead — blank Answer is the only thing that triggers that, not a hidden flag.
+Confidence and Source replace what used to be a single "Notes/Comments" column. Both are headed "(AI-Assisted only)" — real header text, not a comment — precisely so a researcher filling the sheet out by hand knows at a glance those two columns aren't for them; they only get populated on rows this skill drafted or touched. This data (not cell color, not Excel comments) is how review status is captured now, since the file gets synced into Databricks and formatting doesn't survive that sync. Every question is drafted by AI and then reviewed and approved by the researcher (section by section, see "Workflow" below) before the file is ever generated, so Confidence normally shows the AI's real drafted confidence (High/Medium/Low) rather than a separate review-status flag. The one exception: a question with a genuinely blank Answer (nothing AI or the researcher could determine) shows Confidence as **"Needs human input"** instead — blank Answer is the only thing that triggers that, not a hidden flag.
 
 This skill follows a three-step interactive process — draft everything, review and approve it section by section, then generate the file — see "Workflow" below. Don't jump straight from drafting to generating the Excel file.
 
@@ -321,11 +321,11 @@ Responses have been running too long. Default to **1–2 sentences (roughly 15�
 
 ## Output format
 
-In chat, organize by section (A–F). For each question, the `response`/`source`/`confidence` shape below feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. It maps onto the final `DataProfile.xlsx` file as follows:
+In chat, organize by section (A–F). For each question, the `response`/`source`/`confidence` shape below feeds `catalog_draft.json`, which `catalog-dataset` also uses when running this same drafting logic as part of a full data profile. It maps onto the final `DataProfile.xlsx` file as follows:
 
 * `response` → the DataBio sheet's Answer column. Populated whenever a draft (or human answer) exists — left blank only when genuinely nothing can be said, never filled with placeholder text like "Requires human input."
-* `confidence` → the Confidence (AI-assisted only) column, *unless* `response` is blank, in which case the generator writes the literal value **"Needs human input"** instead. This is the only thing that triggers it — a populated Answer always shows a real confidence level, never a review-status flag.
-* `source` → the Source (AI-assisted only) column, *unless* `response` is blank, in which case the generator writes `review_notes` instead (falling back to a generic note if `review_notes` is empty). Set `review_notes` to a short note on what's needed and from whom whenever you leave a `response` blank — it's the only place that context surfaces in the deliverable.
+* `confidence` → the Confidence (AI-Assisted only) column, *unless* `response` is blank, in which case the generator writes the literal value **"Needs human input"** instead. This is the only thing that triggers it — a populated Answer always shows a real confidence level, never a review-status flag.
+* `source` → the Source (AI-Assisted only) column, *unless* `response` is blank, in which case the generator writes `review_notes` instead (falling back to a generic note if `review_notes` is empty). Set `review_notes` to a short note on what's needed and from whom whenever you leave a `response` blank — it's the only place that context surfaces in the deliverable.
 
 The `source` field is a plain-language attribution, not just a citation, since a reader opening the file cold has no visibility into the drafting/review conversation, and it evolves as a question moves through the Workflow:
 
@@ -351,7 +351,7 @@ For each question, give each field its own line with blank lines between them an
 
 Leave a blank line between one question's block and the next one, too. This formatting applies whenever responses are shown in chat — both the initial draft summary and Step 2's section-by-section review.
 
-Also provide a YAML block. `needs_review` is optional here — this skill's own workflow doesn't act on it (see "Output format" above, which keys off blank `response` instead); it exists for `catalog-dataset`'s separate tiered Q&A, which does read it when it runs this same drafting logic as part of a full catalog:
+Also provide a YAML block. `needs_review` is optional here — this skill's own workflow doesn't act on it (see "Output format" above, which keys off blank `response` instead), and `catalog-dataset`'s Phase 2 doesn't filter by it either (it reviews every question regardless). It's kept as a simple record of what a researcher explicitly skipped versus resolved:
 
 ```yaml
 data_bio_tab:
@@ -473,9 +473,9 @@ data_bio_tab:
       needs_review:
 ```
 
-## Priority guidance
+## Question importance reference
 
-This skill's own Workflow (above) reviews every question section by section rather than pulling flagged ones into a separate round, so priority tiers aren't part of *this* skill's process. They exist for `catalog-dataset`, which runs this same drafting logic as part of a full catalog and does present flagged fields/questions in tiered Critical/Important/Optional rounds:
+Not tied to any specific step in this skill's own workflow (which reviews every question section by section regardless of priority) — just a rough guide to which questions matter most, useful when deciding what deserves extra scrutiny or explaining to the researcher why something needs a closer look:
 
 * Critical: Q4 (inappropriate uses), Q15 (equity/exclusion), Q16–Q19 (all consent/access questions)
 * Important: Q3 (current use), Q7–Q8 (provenance chain), Q22 (limitations and equity caveats)
@@ -483,7 +483,7 @@ This skill's own Workflow (above) reviews every question section by section rath
 
 ## Relationship to other skills
 
-Use this skill only once the user has made clear they want just the narrative tab, not metadata too. A bare "fill out a data biography"/"data bio" request, with no such clarification, should go to `catalog-dataset` instead — it runs the same drafting logic for both sheets together with its own tiered Q&A, and generates `DataProfile.xlsx` in one pass. `DataDict.xlsx` is a separate, optional deliverable — `catalog-dataset` will offer it when the actual data can be read, or invoke `data-dictionary` directly any time.
+Use this skill only once the user has made clear they want just the narrative tab, not metadata too. A bare "fill out a data biography"/"data bio" request, with no such clarification, should go to `catalog-dataset` instead — it runs the same drafting logic for both sheets together, reviewing Metadata as a whole and DataBio section by section, and generates `DataProfile.xlsx` in one pass. `DataDict.xlsx` is a separate, optional deliverable — `catalog-dataset` will offer it when the actual data can be read, or invoke `data-dictionary` directly any time.
 
 ## Do not do the following
 

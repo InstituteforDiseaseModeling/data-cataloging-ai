@@ -74,12 +74,12 @@ DATADICT_KEYS = [
     "numerator", "denominator", "sensitive", "data_quality_notes",
 ]
 
-# Metadata sheet: fields end at row 19 ("Related dataset location(s)"); row 20
-# is the "To Be Completed by Modeling Technology Team" banner, and rows 21-23
+# Metadata sheet: fields end at row 20 ("Related dataset location(s)"); row 21
+# is the "To Be Completed by Modeling Technology Team" banner, and rows 22-24
 # (Storage/repository location, Data steward, Data Catalog location) are that
 # team's responsibility, not this skill's -- never write to those rows.
 METADATA_FIRST_ROW = 3
-METADATA_LAST_ROW = 19
+METADATA_LAST_ROW = 20
 
 
 # ── Config: where the SharePoint-synced templates and dataset folders live ──

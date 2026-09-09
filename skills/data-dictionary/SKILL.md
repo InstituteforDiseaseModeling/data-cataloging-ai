@@ -182,7 +182,7 @@ In chat, default to a markdown table:
 | file_name | variable_name | variable_label | definition | data_type | unit | allowed_values_codes | missing_unknown_codes | source_derivation | numerator | denominator | sensitive | data_quality_notes |
 | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- | --- |
 
-This table (plus `confidence`/`needs_review` from the YAML below) feeds `catalog_draft.json` for the tiered Q&A in `catalog-dataset`. The final `DataDict.xlsx` file has these same 13 content columns but no confidence or needs_review columns: variables still flagged `needs_review` get a yellow-filled Variable Name cell with an Excel comment carrying the issue, and `sensitive: true` variables get a red-filled Sensitive? cell.
+This table (plus `confidence`/`needs_review` from the YAML below) feeds `catalog_draft.json`, which `catalog-dataset` also uses if the data dictionary was offered and accepted as part of a full data profile. The final `DataDict.xlsx` file has these same 13 content columns but no confidence or needs_review columns: variables still flagged `needs_review` get a yellow-filled Variable Name cell with an Excel comment carrying the issue, and `sensitive: true` variables get a red-filled Sensitive? cell.
 
 Also provide a YAML block:
 
