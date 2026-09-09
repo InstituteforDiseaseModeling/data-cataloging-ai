@@ -101,7 +101,7 @@ Fills the whole data profile (Metadata + DataBio) in one pass: drafts everything
 
 ### `metadata` / `data-bio`
 
-Fill one sheet at a time instead of the whole profile — `metadata` for the 18 admin fields, `data-bio` for the 22 narrative questions. Reach for these only when you specifically want just one sheet; a plain "fill out a data biography" request defaults to `catalog-dataset` instead (see Terminology below).
+Fill one sheet at a time instead of the whole profile — `metadata` for the 18 admin fields, `data-bio` for the 22 narrative questions. Reach for these only when you specifically want just one sheet.
 
 ### `data-dictionary`
 
@@ -121,4 +121,4 @@ skills/
   catalog-dataset/   metadata/   data-bio/   data-dictionary/   assess-dataset/
 ```
 
-`DataProfile.xlsx` and `DataDict.xlsx` are **not** in this repo — the masters live in the SharePoint `_Templates_` folder, which is the single source of truth for template content.
+`DataProfile.xlsx` and `DataDict.xlsx` are **not** in this repo — the masters live in the SharePoint `_Templates_` folder with the `Data Profiles` directory, which is the single source of truth for template content.
