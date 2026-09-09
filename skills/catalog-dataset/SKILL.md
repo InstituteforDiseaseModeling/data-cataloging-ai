@@ -31,7 +31,7 @@ The user may provide one or more of the following:
 **Mode A** (full data): dataset file available for direct inspection.
 **Mode B** (documentation only): only supporting docs available — e.g., due to a DUA. Note this explicitly.
 
-Before using Mode A, check for signals that the dataset may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open the dataset file at all — run Mode B and tell the researcher why, per `assess-dataset`'s "Sensitive data classification gate" (the researcher can explicitly authorize inspection anyway).
+Before using Mode A, check for signals that the dataset may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open the dataset file at all — run Mode B and tell the researcher why. See `assess-dataset`'s "Sensitive data classification gate" for exactly when a researcher's authorization is (and isn't) enough to proceed — a DUA/DSA signal specifically requires reading the agreement's actual terms, not just the researcher's say-so — and for the minimize-what-you-inspect rule once authorized.
 
 ## Offering the data dictionary
 
@@ -292,5 +292,7 @@ Do not:
 * Guess which file a landing page refers to when it links to multiple candidates — ask first.
 * Draft from a downloaded file without first telling the user exactly what was pulled and from where.
 * Open a dataset file once a Restricted/Sensitive/Highly Sensitive signal is present, without the researcher's explicit authorization — see the Sensitive data classification gate in Inputs.
+* Rely on a researcher's authorization alone when the signal is a DUA/DSA — its actual terms must be read first; they can prohibit AI/automated processing outright.
+* Inspect the whole file once authorized, when the draft only needs a subset of columns/rows.
 * Automatically draft or generate a data dictionary without asking first, even when Mode A applies.
 * Force a multi-file bundle into one combined data dictionary without asking whether separate per-file dictionaries would serve better.

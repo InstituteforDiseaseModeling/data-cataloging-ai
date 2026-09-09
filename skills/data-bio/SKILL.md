@@ -45,7 +45,7 @@ The user may provide one or more of the following:
 **Mode A** (full data available): use documentation as the primary source; the dataset file may support Section F questions on data quality.
 **Mode B** (documentation only): documentation is the only source. This tab is often well-served in Mode B because most questions are about how data was collected — answerable from protocol and papers.
 
-Before opening the dataset file for Section F, check for signals that it may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open it — answer Section F from documentation only (Mode B) and tell the researcher why, per `assess-dataset`'s "Sensitive data classification gate" (the researcher can explicitly authorize inspection anyway).
+Before opening the dataset file for Section F, check for signals that it may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open it — answer Section F from documentation only (Mode B) and tell the researcher why. See `assess-dataset`'s "Sensitive data classification gate" for exactly when a researcher's authorization is (and isn't) enough to proceed — a DUA/DSA signal specifically requires reading the agreement's actual terms, not just the researcher's say-so — and for the minimize-what-you-inspect rule once authorized.
 
 ## Outputs
 
@@ -502,4 +502,6 @@ Do not:
 * Show a question's response without its confidence and source during Step 2 — the researcher needs all three to decide whether to approve or correct it.
 * Guess which file a landing page refers to when it links to multiple candidates — ask first.
 * Open a dataset file for Section F once a Restricted/Sensitive/Highly Sensitive signal is present, without the researcher's explicit authorization — see the Sensitive data classification gate in Inputs.
+* Rely on a researcher's authorization alone when the signal is a DUA/DSA — its actual terms must be read first; they can prohibit AI/automated processing outright.
+* Inspect the whole file once authorized, when Section F only needs a subset of columns/rows.
 * Draft from a downloaded file without first telling the user exactly what was pulled and from where.

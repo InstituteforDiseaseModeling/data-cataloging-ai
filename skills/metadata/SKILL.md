@@ -36,7 +36,7 @@ If given a URL, resolve it before drafting anything — see `data-bio`'s Step 1 
 **Mode A** (full data available): use the dataset file and documentation together.
 **Mode B** (documentation only): use available documentation only. Do not invent dataset structure or characteristics.
 
-Before using Mode A, check for signals that the dataset may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open the dataset file at all — stay in Mode B and tell the researcher why, per `assess-dataset`'s "Sensitive data classification gate" (the researcher can explicitly authorize inspection anyway).
+Before using Mode A, check for signals that the dataset may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open the dataset file at all — stay in Mode B and tell the researcher why. See `assess-dataset`'s "Sensitive data classification gate" for exactly when a researcher's authorization is (and isn't) enough to proceed — a DUA/DSA signal specifically requires reading the agreement's actual terms, not just the researcher's say-so — and for the minimize-what-you-inspect rule once authorized.
 
 ## Step 0: Locate the SharePoint templates and dataset folder
 
@@ -338,3 +338,5 @@ Do not:
 * Fill in or ask about Storage/repository location, Data steward, or Data Catalog location — those are out of scope for this skill.
 * Use overly promotional or overclaiming language.
 * Open a dataset file once a Restricted/Sensitive/Highly Sensitive signal is present, without the researcher's explicit authorization — see the Sensitive data classification gate above.
+* Rely on a researcher's authorization alone when the signal is a DUA/DSA — its actual terms must be read first; they can prohibit AI/automated processing outright.
+* Inspect the whole file once authorized, when the field can be resolved from a subset of columns/rows.

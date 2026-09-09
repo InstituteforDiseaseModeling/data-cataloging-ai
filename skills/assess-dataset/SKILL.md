@@ -26,13 +26,20 @@ The user may provide one or more of the following:
 
 If a specific analysis purpose or question is provided, use it to focus the fitness assessment.
 
+**Mode A** (full data available): the dataset file itself can be inspected directly — actual values, ranges, missingness — with documentation as a supplementary source.
+**Mode B** (documentation only): no dataset file to inspect (e.g. blocked by the gate below, or none was provided). Assess from documentation alone — README, codebook, protocol, schema — and say so plainly; do not invent what the underlying data looks like.
+
 ## Sensitive data classification gate
 
 Before opening or inspecting any actual dataset file, check for signals that it may be classified Restricted, Sensitive, or Highly Sensitive: an existing "Sensitive data classification" value from prior cataloging work on this dataset, a Data Use/Sharing Agreement, a confidentiality or access-restriction notice in accompanying documentation, or the researcher's own description of the data.
 
-If any such signal is present, **do not open the dataset file at all** — not even to check its structure, column names, row count, or size. Tell the researcher plainly that you're not inspecting the raw file because of its classification, and that anything you produce from here is drawn from documentation only (Mode B).
+If any such signal is present, **do not open the dataset file(s) without explicit approval** — not even to check its structure, column names, row count, or size. Tell the researcher plainly that you're not inspecting the raw file because of its classification, and that anything you produce from here is drawn from documentation only.
 
-This is not a hard stop: if the researcher explicitly confirms they are authorized to have you inspect the data despite its classification, you may proceed to open it. Absent that confirmation, stay in Mode B for this dataset.
+If there is indication of the existence of a Data Use/Sharing Agreement (DUA/DSA), ask the user for a link to or copy of the actual agreement, and read its terms before proceeding. A DUA can restrict or prohibit processing by AI/automated tools or third-party systems. If provided, its stated terms override a verbal authorization, they don't just supplement it. If a DUA/DSA is known to exist but its text can't be located or provided, stay in Mode B until it can be reviewed — treat the absence of the text as reason for more caution, not less.
+
+For a classification signal that is *not* a DUA/DSA (e.g. an internal "Sensitive" tag with no formal agreement attached), the researcher's explicit confirmation that they're authorized to have you inspect the data is sufficient on its own to proceed.
+
+**Once authorized to open the file, minimize what you actually inspect.** Read only the columns and rows needed to perform the assessment, not the entire dataset, whenever that's sufficient — full-file inspection is only warranted when the assessment genuinely requires it (e.g. row-level duplicate or consistency checks that can't be scoped to a subset).
 
 This same rule applies to every skill in this suite that can inspect an actual dataset file — `metadata`, `data-bio` (Section F), `data-dictionary`, and `catalog-dataset` (which runs all of them together on the same dataset).
 
@@ -286,7 +293,7 @@ If the dataset scores High overall, briefly confirm what makes it ready and note
 
 When assessing the dataset:
 
-* Inspect the actual dataset whenever a file is available — *unless* the "Sensitive data classification gate" above applies. Do not rely only on column names.
+* Inspect the actual dataset whenever a file is available — *unless* the "Sensitive data classification gate" above applies.
 * Distinguish observed facts from inferences. Use language like "appears to" or "likely" for inferences.
 * Do not modify or clean the dataset.
 * Do not expose sensitive row-level data. Use aggregate summaries.
@@ -374,3 +381,5 @@ Do not:
 * Assign a High overall rating when critical dimensions score Low.
 * Produce a final usability judgment without flagging what could not be verified.
 * Open a dataset file once a Restricted/Sensitive/Highly Sensitive signal is present, without the researcher's explicit authorization — see "Sensitive data classification gate" above.
+* Rely on a researcher's authorization alone when the signal is a DUA/DSA — its actual terms must be read first; they can prohibit AI/automated processing outright.
+* Inspect the whole file once authorized, when the assessment only needs a subset of columns/rows.

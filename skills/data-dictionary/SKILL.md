@@ -31,7 +31,7 @@ If given a URL, resolve it before drafting anything — see `data-bio`'s Step 1 
 **Mode A** (full data available): derive from the actual dataset. Use documentation as supplementary source.
 **Mode B** (documentation only): derive from codebook, questionnaire, or existing variable list. Never invent what the data looks like.
 
-Before using Mode A, check for signals that the dataset may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open the dataset file at all — stay in Mode B and tell the researcher why, per `assess-dataset`'s "Sensitive data classification gate" (the researcher can explicitly authorize inspection anyway). This will often mean drafting a thinner dictionary from a codebook/questionnaire alone rather than inspecting actual values — say so plainly rather than quietly filling gaps.
+Before using Mode A, check for signals that the dataset may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open the dataset file at all — stay in Mode B and tell the researcher why. See `assess-dataset`'s "Sensitive data classification gate" for exactly when a researcher's authorization is (and isn't) enough to proceed — a DUA/DSA signal specifically requires reading the agreement's actual terms, not just the researcher's say-so — and for the minimize-what-you-inspect rule once authorized. This will often mean drafting a thinner dictionary from a codebook/questionnaire alone rather than inspecting actual values — say so plainly rather than quietly filling gaps.
 
 ## More than one dictionary for one dataset
 
@@ -233,4 +233,6 @@ Do not:
 * Ignore existing documentation when it conflicts with inference.
 * Mark sensitive as false without clear evidence that the variable is non-sensitive.
 * Open a dataset file once a Restricted/Sensitive/Highly Sensitive signal is present, without the researcher's explicit authorization — see the Sensitive data classification gate in Inputs.
+* Rely on a researcher's authorization alone when the signal is a DUA/DSA — its actual terms must be read first; they can prohibit AI/automated processing outright.
+* Inspect the whole file once authorized, when the dictionary can be drafted from a subset of columns/rows.
 * Combine a multi-file bundle into one dictionary without asking whether separate per-file dictionaries would serve better — see "More than one dictionary for one dataset" above.

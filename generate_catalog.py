@@ -51,6 +51,7 @@ Usage:
 
 import json
 import os
+import re
 import sys
 from pathlib import Path
 
@@ -80,6 +81,18 @@ DATADICT_KEYS = [
 # team's responsibility, not this skill's -- never write to those rows.
 METADATA_FIRST_ROW = 3
 METADATA_LAST_ROW = 20
+
+# DataBio sheet: 22 We All Count questions, rows 3-24.
+DATABIO_FIRST_ROW = 3
+DATABIO_MAX_ENTRIES = 22
+
+
+def sanitize_dataset_name(name):
+    # Windows forbids these in file/folder names; a dataset title like
+    # "DRC ECV: Round 2" would otherwise crash Path.mkdir/wb.save with a
+    # raw OSError instead of a message pointing back at the actual cause.
+    cleaned = re.sub(r'[<>:"/\\|?*]', "_", name).strip(" .")
+    return cleaned.replace(" ", "_") or "Dataset"
 
 
 # ── Config: where the SharePoint-synced templates and dataset folders live ──
@@ -138,11 +151,32 @@ def _load_or_copy(template_path, output_path):
     return load_workbook(template_path)
 
 
+def _sheet(wb, name):
+    try:
+        return wb[name]
+    except KeyError:
+        sys.exit(
+            f"ERROR: expected sheet '{name}' not found in the workbook (found: "
+            f"{wb.sheetnames}). The template may have been restructured -- "
+            "check the master template in the SharePoint _Templates_ folder."
+        )
+
+
+def _save(wb, output_path):
+    try:
+        wb.save(output_path)
+    except PermissionError:
+        sys.exit(
+            f"ERROR: could not save {output_path} -- it looks like the file is "
+            "open in Excel (or otherwise locked). Close it and try again."
+        )
+
+
 def fill_metadata_sheet(wb, data):
     # Field | Response only -- no color/comment review-flagging here. An
     # unresolved field is simply left blank; everything else about its
     # review status lives in chat and catalog_draft.json, not in the file.
-    ws = wb["Metadata"]
+    ws = _sheet(wb, "Metadata")
     entries = data.get("metadata", [])
     max_entries = METADATA_LAST_ROW - METADATA_FIRST_ROW + 1
     for i, entry in enumerate(entries[:max_entries]):
@@ -169,9 +203,9 @@ def fill_databio_sheet(wb, data):
     # keyed purely off whether response is blank, not a separate needs_review
     # flag (that field still exists in the JSON schema as a record of what
     # was explicitly skipped, it's just not consulted here).
-    ws = wb["DataBio"]
-    for i, entry in enumerate(data.get("data_bio", [])):
-        row = 3 + i
+    ws = _sheet(wb, "DataBio")
+    for i, entry in enumerate(data.get("data_bio", [])[:DATABIO_MAX_ENTRIES]):
+        row = DATABIO_FIRST_ROW + i
         response = entry.get("response", "")
 
         ws.cell(row=row, column=DATABIO_ANSWER_COL, value=response)
@@ -199,7 +233,7 @@ def fill_dataprofile(data, templates_dir, output_dir, base_name, sheets):
     if "databio" in sheets:
         fill_databio_sheet(wb, data)
 
-    wb.save(output_path)
+    _save(wb, output_path)
     return output_path
 
 
@@ -208,7 +242,7 @@ def fill_datadict(data, templates_dir, output_dir, base_name):
     template_path = Path(templates_dir) / "DataDict.xlsx"
     output_path = output_dir / f"{base_name}_DataDict.xlsx"
     wb = _load_or_copy(template_path, output_path)
-    ws = wb["Sheet1"]
+    ws = _sheet(wb, "Sheet1")
 
     variables = data.get("variables", [])
     for i, entry in enumerate(variables):
@@ -235,7 +269,7 @@ def fill_datadict(data, templates_dir, output_dir, base_name):
     if variables:
         ws.auto_filter.ref = f"A1:M{len(variables) + 1}"
 
-    wb.save(output_path)
+    _save(wb, output_path)
     return output_path
 
 
@@ -285,10 +319,13 @@ def main():
         sys.exit(f"ERROR: {input_path} not found. Run the catalog-dataset skill first to generate it.")
 
     with open(input_path, encoding="utf-8") as f:
-        data = json.load(f)
+        try:
+            data = json.load(f)
+        except json.JSONDecodeError as e:
+            sys.exit(f"ERROR: {input_path} is not valid JSON ({e}). Check for a stray edit or incomplete save.")
 
     config = load_config(config_path)
-    base_name = data.get("dataset_name", "Dataset").replace(" ", "_")
+    base_name = sanitize_dataset_name(data.get("dataset_name", "Dataset"))
 
     if output_dir_override is not None:
         output_dir = output_dir_override
