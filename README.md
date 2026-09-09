@@ -71,9 +71,11 @@ Every drafting skill operates in one of two modes, and reports which one it used
 
 ## How to catalog a dataset
 
-Tell Claude Code what you want to catalog — for example:
+Invoke the skill with a forward slash followed by its name, then your request — for example:
 
-> "I need to fill out a data profile for the XYZ dataset. It's a CSV file at [path or link], and I have a study protocol I can share too."
+> `/catalog-dataset` I need to fill out a data profile for the XYZ dataset. It's a CSV file at [path or link], and I have a study protocol I can share too.
+
+Plain natural language (no `/`) can also trigger the skill if it matches closely enough, but the slash form is the reliable way to invoke it directly.
 
 The first time you do this on a machine, Claude will ask for the folder path from Setup and remember it after that — see "Where everything lives" below. From there:
 
