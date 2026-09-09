@@ -40,7 +40,7 @@ This is saved to `${CLAUDE_PLUGIN_DATA}/cataloging_config.json` — tied to the 
 
 ## Setup
 
-Two one-time steps, no git or code required:
+Three one-time steps, no git or code required:
 
 1. **Sync the Data Profiles folder to your computer.** Open the [Data Profiles SharePoint library](https://bmgf.sharepoint.com/:f:/r/sites/IDMOD/Shared%20Documents/IDM%20Software/Data%20Management%20Strategy/Data%20Profiles?d=wec03896e3ffb400f86111a2f0e8c9bf2&csf=1&web=1&e=0IeHLQ) and click **"Add shortcut to OneDrive"** (toolbar, or right-click the folder), then confirm **"My files"** when prompted for the destination. It'll then appear under "OneDrive - Gates Foundation" in File Explorer within a minute or two — copy its path; you'll need it below.
 2. **Install the skills in Claude Code.** How you do this depends on how you access Claude Code:
@@ -57,6 +57,7 @@ Two one-time steps, no git or code required:
    /plugin install data-cataloging-ai@data-cataloging-ai
    ```
    Then run `/plugin` → **Marketplaces** tab → enable **auto-update** for this marketplace, so future updates reach you automatically.
+3. **Enable the Microsoft 365 connector in Claude.** This is what lets Claude write directly into SharePoint and read the local files you point it to — without it, file access won't work even though the plugin is installed. Go to **Settings** → **Customize** → **Connectors** in Claude, select **Microsoft 365**, and sign in with your Microsoft account. This mirrors your own existing OneDrive/SharePoint permissions — Claude doesn't get any elevated access beyond what you already have.
 
    Note: `/plugin` is a CLI-only command — if you're in the Desktop app and see "`/plugin` isn't available in this environment," use the Settings → Plugins path above instead.
 
