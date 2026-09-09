@@ -14,16 +14,18 @@ These three concepts are related but distinct, and the naming is intentionally k
 * **Data Biography** — a specific framework from We All Count: narrative, equity-focused questions about a dataset's origin, purpose, and social context (who made it, why, who's excluded, consent). This term refers *only* to `DataProfile.xlsx`'s "DataBio" sheet (22 questions).
 * **Data Dictionary / Codebook** — the variable-level schema (one row per column/field in the dataset). Lives in `DataDict.xlsx`.
 
-A filled-out **data profile** is one Excel file (The Metadata and Data Biography sheets), `DataProfile.xlsx`; `DataDict.xlsx` is a separate, optional deliverable (see `data-dictionary` above) — a dataset can end up with zero, one, or several of them.
+A filled-out **data profile** is one Excel file (the Metadata and Data Biography sheets), `DataProfile.xlsx`; `DataDict.xlsx` is a separate, optional deliverable (see `data-dictionary` above) — a dataset can end up with zero, one, or several of them.
 
 ```
 DataProfile.xlsx              <- "the data profile"
-├── Metadata sheet            (17 fields   — filled by the `metadata` skill)
+├── Metadata sheet            (18 fields   — filled by the `metadata` skill)
 └── DataBio sheet             (22 questions — filled by the `data-bio` skill)
 
 DataDict.xlsx                 <- separate, optional (the `data-dictionary` skill)
 ```
+
 The Data Dictionary is kept separate for practical reasons, not because it's conceptually unrelated: a dataset is sometimes a bundle of several distinct files with different fields, so one dictionary doesn't always map cleanly to one profile — and sometimes the underlying data isn't even accessible to build a dictionary from (Restricted/Sensitive, or under a DUA) while the rest of the profile still can be completed. This is a current design choice, not a permanent one — if those constraints stop being the common case, folding the dictionary back into the data profile as a third sheet may make more sense.
+
 ## Where everything lives (SharePoint)
 
 The "Data Profiles" library is IDM's shared SharePoint document library — the central, org-wide home for dataset catalog records. It holds the master templates (`_Templates_` folder), plus one folder per dataset that's been cataloged so far, each containing that dataset's finished `DataProfile.xlsx` and (if generated) `DataDict.xlsx`. Anyone at IDM can browse it to see what's already been documented about a dataset — what it contains, who owns it, its access restrictions — without needing access to the underlying data itself, which matters most for datasets that are Restricted/Sensitive or governed by a DUA.
@@ -35,6 +37,7 @@ The skills need to know the local path to that synced folder. The first time any
 python "$CLAUDE_PLUGIN_ROOT/generate_catalog.py" --set-data-profiles-root "<path to your synced Data Profiles folder>"
 ```
 This is saved to `${CLAUDE_PLUGIN_DATA}/cataloging_config.json` — tied to the installed plugin, not to any project folder, so it survives plugin updates and you're never asked again on that machine. It expects a `_Templates_` subfolder inside the path you give it (containing `DataProfile.xlsx`/`DataDict.xlsx`); pass `--templates-dir` explicitly if yours is named differently.
+
 ## Setup
 
 Two one-time steps, no git or code required:
@@ -46,7 +49,7 @@ Two one-time steps, no git or code required:
    ```
    InstituteforDiseaseModeling/data-cataloging-ai
    ```
-   Once the marketplace is added, click the **+** next to it to install the `data-cataloging-ai` plugin. If there is an option to enable auto-update for the plugin on the settings screen, do so for future updates reach you automatically.
+   Once the marketplace is added, click the **+** next to it to install the `data-cataloging-ai` plugin. If there is an option to enable auto-update for the plugin on the settings screen, do so, so that future updates reach you automatically.
 
    **Claude Code CLI (terminal):**
    ```
@@ -96,7 +99,7 @@ Fills the whole data profile (Metadata + DataBio) in one pass: drafts everything
 
 ### `metadata` / `data-bio`
 
-Fill one sheet at a time instead of the whole profile — `metadata` for the 17 admin fields, `data-bio` for the 22 narrative questions. Reach for these only when you specifically want just one sheet; a plain "fill out a data biography" request defaults to `catalog-dataset` instead (see Terminology below).
+Fill one sheet at a time instead of the whole profile — `metadata` for the 18 admin fields, `data-bio` for the 22 narrative questions. Reach for these only when you specifically want just one sheet; a plain "fill out a data biography" request defaults to `catalog-dataset` instead (see Terminology below).
 
 ### `data-dictionary`
 

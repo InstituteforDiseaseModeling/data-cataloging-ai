@@ -167,8 +167,8 @@ def fill_databio_sheet(wb, data):
     # in) during section-by-section review before generation ever runs, so a
     # populated response is trustworthy on its own -- Confidence/Source are
     # keyed purely off whether response is blank, not a separate needs_review
-    # flag (that field still exists in the JSON schema for catalog-dataset's
-    # own tiered Q&A, it's just not consulted here).
+    # flag (that field still exists in the JSON schema as a record of what
+    # was explicitly skipped, it's just not consulted here).
     ws = wb["DataBio"]
     for i, entry in enumerate(data.get("data_bio", [])):
         row = 3 + i

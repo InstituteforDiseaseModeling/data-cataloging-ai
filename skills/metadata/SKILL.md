@@ -321,7 +321,7 @@ Why: [brief reason it needs review]
 What to provide: [what the human should supply]
 ```
 
-Priority guidance:
+Priority guidance (not tied to any specific step in this skill's or `catalog-dataset`'s workflow — both review every field regardless of priority; this is just a rough importance reference, useful when deciding what deserves the closest look or explaining to the researcher why a field matters):
 
 * Critical: IDM Data owner, Data Location(s), Data Sharing Agreement URL, sensitive data classification
 * Important: version, citation/attribution, geographic coverage, temporal coverage (start/end), unit of observation, Data Provider Point of Contact
