@@ -4,7 +4,7 @@ Use this skill when the user wants to fill `DataDict.xlsx`.
 
 `DataDict.xlsx` is a structured data dictionary with one row per variable and 13 columns. This skill generates a draft row for each variable from the available dataset or documentation.
 
-Note: this is one of three files in a dataset catalog (alongside `Metadata.xlsx` and `DataBio.xlsx`). It is a data dictionary/codebook, not a "data biography" — that term is reserved for `DataBio.xlsx`'s 22 narrative questions. See the `catalog-dataset` skill if the user wants all three filled together.
+Note: `DataDict.xlsx` is a separate, standalone deliverable from `DataProfile.xlsx` (whose "Metadata" and "DataBio" sheets are filled by the `metadata` and `data-bio` skills) — it is not automatically part of a data profile, and doesn't get bundled in unless specifically asked for. This also means a dataset isn't limited to exactly one data dictionary: a bundle of several distinct files can get a dictionary per file instead of one combined file — see "More than one dictionary for one dataset" below. `catalog-dataset` can offer to run this skill as part of filling out a data profile, but the two are independent; run this skill standalone any time.
 
 ## When to use this skill
 
@@ -21,7 +21,7 @@ The user may provide one or more of the following:
 
 * A dataset file
 * An existing data dictionary, codebook, or questionnaire
-* A dataset profile from the `profile-dataset` skill
+* A dataset usability assessment from the `assess-dataset` skill
 * Existing documentation (README, protocol, schema)
 * A URL — either a direct link to a downloadable data file, or a link to a page describing the dataset
 * Domain context from the user
@@ -30,6 +30,17 @@ If given a URL, resolve it before drafting anything — see `data-bio`'s Step 1 
 
 **Mode A** (full data available): derive from the actual dataset. Use documentation as supplementary source.
 **Mode B** (documentation only): derive from codebook, questionnaire, or existing variable list. Never invent what the data looks like.
+
+Before using Mode A, check for signals that the dataset may be classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or the researcher's own description). If present, do not open the dataset file at all — stay in Mode B and tell the researcher why, per `assess-dataset`'s "Sensitive data classification gate" (the researcher can explicitly authorize inspection anyway). This will often mean drafting a thinner dictionary from a codebook/questionnaire alone rather than inspecting actual values — say so plainly rather than quietly filling gaps.
+
+## More than one dictionary for one dataset
+
+A "dataset" is sometimes really a bundle of several distinct files (e.g. a household file, an individual file, several country- or wave-specific extracts). Before drafting, if more than one file is in scope, ask the researcher which they'd prefer:
+
+* **One combined dictionary** — every file's variables in a single table, distinguished by the `file_name` column (already part of the 13-column schema below). Best when the files share a common structure or purpose.
+* **A separate dictionary per file** — cleaner when the files are different enough in nature or audience that mixing them into one table would be confusing, or when they'll be handed off/maintained separately. Draft and generate each file's variables independently, each with its own `variables` array and a distinguishing `dataset_name` (e.g. `<Dataset>_<ComponentName>`), producing separate `..._DataDict.xlsx` outputs in the same dataset folder — see `catalog-dataset`'s "Offering the data dictionary" section for the exact generation commands.
+
+Don't default to combining everything into one dictionary just because that's simpler — ask first when the bundle isn't obviously one coherent file.
 
 ## Outputs
 
@@ -221,3 +232,5 @@ Do not:
 * Include long lists of raw values for high-cardinality or sensitive columns.
 * Ignore existing documentation when it conflicts with inference.
 * Mark sensitive as false without clear evidence that the variable is non-sensitive.
+* Open a dataset file once a Restricted/Sensitive/Highly Sensitive signal is present, without the researcher's explicit authorization — see the Sensitive data classification gate in Inputs.
+* Combine a multi-file bundle into one dictionary without asking whether separate per-file dictionaries would serve better — see "More than one dictionary for one dataset" above.

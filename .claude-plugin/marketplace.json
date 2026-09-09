@@ -1,0 +1,12 @@
+{
+  "name": "data-cataloging-ai",
+  "owner": {
+    "name": "Institute for Disease Modeling"
+  },
+  "plugins": [
+    {
+      "name": "data-cataloging-ai",
+      "source": "."
+    }
+  ]
+}

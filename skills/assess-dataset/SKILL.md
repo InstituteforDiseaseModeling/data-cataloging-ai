@@ -26,6 +26,16 @@ The user may provide one or more of the following:
 
 If a specific analysis purpose or question is provided, use it to focus the fitness assessment.
 
+## Sensitive data classification gate
+
+Before opening or inspecting any actual dataset file, check for signals that it may be classified Restricted, Sensitive, or Highly Sensitive: an existing "Sensitive data classification" value from prior cataloging work on this dataset, a Data Use/Sharing Agreement, a confidentiality or access-restriction notice in accompanying documentation, or the researcher's own description of the data.
+
+If any such signal is present, **do not open the dataset file at all** — not even to check its structure, column names, row count, or size. Tell the researcher plainly that you're not inspecting the raw file because of its classification, and that anything you produce from here is drawn from documentation only (Mode B).
+
+This is not a hard stop: if the researcher explicitly confirms they are authorized to have you inspect the data despite its classification, you may proceed to open it. Absent that confirmation, stay in Mode B for this dataset.
+
+This same rule applies to every skill in this suite that can inspect an actual dataset file — `metadata`, `data-bio` (Section F), `data-dictionary`, and `catalog-dataset` (which runs all of them together on the same dataset).
+
 ## Outputs
 
 Produce a structured usability assessment with the following sections:
@@ -276,7 +286,7 @@ If the dataset scores High overall, briefly confirm what makes it ready and note
 
 When assessing the dataset:
 
-* Inspect the actual dataset whenever a file is available. Do not rely only on column names.
+* Inspect the actual dataset whenever a file is available — *unless* the "Sensitive data classification gate" above applies. Do not rely only on column names.
 * Distinguish observed facts from inferences. Use language like "appears to" or "likely" for inferences.
 * Do not modify or clean the dataset.
 * Do not expose sensitive row-level data. Use aggregate summaries.
@@ -363,3 +373,4 @@ Do not:
 * Change, clean, or overwrite the dataset.
 * Assign a High overall rating when critical dimensions score Low.
 * Produce a final usability judgment without flagging what could not be verified.
+* Open a dataset file once a Restricted/Sensitive/Highly Sensitive signal is present, without the researcher's explicit authorization — see "Sensitive data classification gate" above.

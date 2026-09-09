@@ -1,94 +1,119 @@
 # data-cataloging-ai
 
-Skills for auto-generating dataset documentation for a data catalog: administrative metadata, a data biography (purpose, provenance, consent, quality), and a variable-level data dictionary.
+This project is part of an effort to capture information about datasets that IDM uses repeatedly to enable better discoverability and usability of data. It's intended for cataloging datasets that will be (or are already) stored in IDM's workspace within Databricks.
+
+This repository contains skills for auto-generating dataset documentation for a data catalog: administrative metadata, a data biography (purpose, provenance, consent, quality), and a variable-level data dictionary.
+
+**This repository is in active development.** Templates, terminology, and workflows here are still being refined and may change without notice.
 
 ## Terminology
 
 These three concepts are related but distinct, and the naming is intentionally kept separate to avoid confusion:
 
 * **Metadata** — the administrative/catalog-record fields (title, owner, storage, access, coverage). Lives on `DataProfile.xlsx`'s "Metadata" sheet.
-* **Data Biography** — a specific framework from We All Count: narrative, equity-focused questions about a dataset's origin, purpose, and social context (who made it, why, who's excluded, consent). This term refers *only* to `DataProfile.xlsx`'s "DataBio" sheet (22 questions) — not to metadata, not to the data dictionary, and not to the catalog as a whole.
-* **Data Dictionary / Codebook** — the variable-level schema (one row per column/field in the dataset). Lives in `DataDict.xlsx`. A much older and more generic data-documentation concept, unrelated to Data Biography.
+* **Data Biography** — a specific framework from We All Count: narrative, equity-focused questions about a dataset's origin, purpose, and social context (who made it, why, who's excluded, consent). This term refers *only* to `DataProfile.xlsx`'s "DataBio" sheet (22 questions).
+* **Data Dictionary / Codebook** — the variable-level schema (one row per column/field in the dataset). Lives in `DataDict.xlsx`.
 
-Metadata and Data Biography share one workbook (two sheets); the Data Dictionary is a separate file. Together they make up a dataset's **catalog**.
+A filled-out **data profile** is one Excel file (The Metadata and Data Biography sheets), `DataProfile.xlsx`; `DataDict.xlsx` is a separate, optional deliverable (see `data-dictionary` above) — a dataset can end up with zero, one, or several of them.
 
-## The deliverables
+```
+DataProfile.xlsx              <- "the data profile"
+├── Metadata sheet            (17 fields   — filled by the `metadata` skill)
+└── DataBio sheet             (22 questions — filled by the `data-bio` skill)
 
-A fully cataloged dataset produces two Excel files, each with a blank template checked into the repo root:
+DataDict.xlsx                 <- separate, optional (the `data-dictionary` skill)
+```
+The Data Dictionary is kept separate for practical reasons, not because it's conceptually unrelated: a dataset is sometimes a bundle of several distinct files with different fields, so one dictionary doesn't always map cleanly to one profile — and sometimes the underlying data isn't even accessible to build a dictionary from (Restricted/Sensitive, or under a DUA) while the rest of the profile still can be completed. This is a current design choice, not a permanent one — if those constraints stop being the common case, folding the dictionary back into the data profile as a third sheet may make more sense.
+## Where everything lives (SharePoint)
 
-| Template | Sheet(s) | What it captures |
-| --- | --- | --- |
-| `DataProfile.xlsx` | Metadata | 17 administrative/technical fields — title, subject(s), version, provider, production date, owner/point of contact, citation, Data Sharing Agreement URL, geographic/temporal coverage, etc. Two columns: `Field` / `Response`. Three further fields (Storage/repository location, Data steward, Data Catalog location) sit below a "To Be Completed by Modeling Technology Team" banner — out of scope for these skills; always left blank. |
-| `DataProfile.xlsx` | DataBio | 22 narrative questions across six sections (A–F), adapted from the We All Count Data Biography framework — purpose, provenance, collection methods, coverage, consent, and quality. |
-| `DataDict.xlsx` | Sheet1 | One row per variable, 13 columns — file name, variable name/label, definition, data type, unit, allowed values, missing codes, source/derivation, numerator/denominator, sensitivity, and quality notes. |
+The "Data Profiles" library is IDM's shared SharePoint document library — the central, org-wide home for dataset catalog records. It holds the master templates (`_Templates_` folder), plus one folder per dataset that's been cataloged so far, each containing that dataset's finished `DataProfile.xlsx` and (if generated) `DataDict.xlsx`. Anyone at IDM can browse it to see what's already been documented about a dataset — what it contains, who owns it, its access restrictions — without needing access to the underlying data itself, which matters most for datasets that are Restricted/Sensitive or governed by a DUA.
 
-**Never edit these template files directly.** Skills draft content into `catalog_draft.json`, and `generate_catalog.py` fills copies of the templates to produce dataset-specific outputs: `<Dataset>_DataProfile.xlsx`, `<Dataset>_DataDict.xlsx`.
+There's no API integration here — it's plain file access. Once you've synced the library via OneDrive (see Setup above), it's just a folder on your disk; editing a file in it *is* editing the SharePoint copy, and OneDrive pushes the change back automatically (usually within about a minute).
 
-The `metadata` and `data-bio` skills each own one sheet of `DataProfile.xlsx` but write into the *same* output file — if one skill's output already exists when the other runs, it's loaded and updated in place rather than overwritten, so filling one sheet never erases the other's work.
+The skills need to know the local path to that synced folder. The first time any of them runs on a given machine, it checks for a small config file and, if missing, asks you for the path once:
+```
+python "$CLAUDE_PLUGIN_ROOT/generate_catalog.py" --set-data-profiles-root "<path to your synced Data Profiles folder>"
+```
+This is saved to `${CLAUDE_PLUGIN_DATA}/cataloging_config.json` — tied to the installed plugin, not to any project folder, so it survives plugin updates and you're never asked again on that machine. It expects a `_Templates_` subfolder inside the path you give it (containing `DataProfile.xlsx`/`DataDict.xlsx`); pass `--templates-dir` explicitly if yours is named differently.
+## Setup
 
-## Skills
+Two one-time steps, no git or code required:
 
-Each skill lives in `skills/<name>/SKILL.md`. Invoke by name (e.g. `/catalog-dataset`) or by asking for what it does — see each skill's "When to use this skill" section.
+1. **Sync the Data Profiles folder to your computer.** Open the [Data Profiles SharePoint library](https://bmgf.sharepoint.com/:f:/r/sites/IDMOD/Shared%20Documents/IDM%20Software/Data%20Management%20Strategy/Data%20Profiles?d=wec03896e3ffb400f86111a2f0e8c9bf2&csf=1&web=1&e=0IeHLQ) and click **"Add shortcut to OneDrive"** (toolbar, or right-click the folder), then confirm **"My files"** when prompted for the destination. It'll then appear under "OneDrive - Gates Foundation" in File Explorer within a minute or two — copy its path; you'll need it below.
+2. **Install the skills in Claude Code.** How you do this depends on how you access Claude Code:
 
-### `catalog-dataset` — primary entry point
+   **Claude Desktop app:** Go to **Settings → Plugins → Add**, and enter:
+   ```
+   InstituteforDiseaseModeling/data-cataloging-ai
+   ```
+   Follow the prompts to add the marketplace and install the `data-cataloging-ai` plugin from it. Once installed, enable auto-update for it in that same Plugins settings screen, so future updates reach you automatically.
 
-Fills everything in one pass. Use this unless you only need a single sheet/file.
+   **Claude Code CLI (terminal):**
+   ```
+   /plugin marketplace add InstituteforDiseaseModeling/data-cataloging-ai
+   /plugin install data-cataloging-ai@data-cataloging-ai
+   ```
+   Then run `/plugin` → **Marketplaces** tab → enable **auto-update** for this marketplace, so future updates reach you automatically.
 
-1. **Draft** — reads all available sources (dataset file(s), protocol, questionnaire, papers, README, existing docs) and drafts every field/question/variable, writing everything to `catalog_draft.json` with a confidence level (High/Medium/Low) and a `needs_review` flag per item.
-2. **Q&A** — presents unresolved items back to you in three tiers, one at a time: Critical (data owner/point of contact, Data Sharing Agreement, consent questions) → Important (version, citation, methodology detail) → Optional (update frequency, enumerator training, etc). Answer by number or type `skip`.
-3. **Generate** — runs `python generate_catalog.py`, which fills the templates and reports the output paths.
-
-### `metadata`
-
-Fills just `DataProfile.xlsx`'s Metadata sheet (17 fields). Useful when the data biography or data dictionary aren't needed yet, or to redo the metadata sheet in isolation.
-
-### `data-bio`
-
-Fills just `DataProfile.xlsx`'s DataBio sheet (22 questions) — the actual "data biography." This is the most human-judgment-intensive sheet — consent, equity, and "inappropriate uses" questions are always flagged for human input. Triggers whenever the user mentions filling out a data bio/biography specifically, and runs its own four-step process: draft from available sources → ask only what needs human input → walk through each section (A–F) for approval, revising until you sign off → generate the file for you to grab.
-
-### `data-dictionary`
-
-Fills just `DataDict.xlsx`, one row per variable. Works either from an actual dataset file (inspecting real values) or from documentation alone (codebook, questionnaire) when only docs are available or data is sensitive.
-
-### `profile-dataset`
-
-Not part of the catalog output — a standalone data-quality/analytical-fitness assessment (completeness, consistency, uniqueness, validity, temporal/spatial coverage, linkability) with a scored usability rating. Useful before cataloging, or as a supporting input the other skills can cite (e.g. for Metadata's "sensitive data classification" or DataBio's Section F quality questions).
+   Note: `/plugin` is a CLI-only command — if you're in the Desktop app and see "`/plugin` isn't available in this environment," use the Settings → Plugins path above instead.
 
 ## Modes
 
 Every drafting skill operates in one of two modes, and reports which one it used:
 
-* **Mode A — full data available**: the dataset file itself can be inspected (actual values, ranges, missingness), with documentation as a supplementary source.
+* **Mode A — full data available**: the dataset file itself can be inspected (actual values, ranges, missingness), with documentation as a supplementary source. Datasets are expected to be deposited directly in the same SharePoint dataset folder as their profile; check there first.
 * **Mode B — documentation only**: no dataset file (e.g. access is under a Data Use Agreement). Drafts come only from protocol, questionnaire, papers, or other documentation. Never invents what the underlying data looks like.
 
-## Review flags in the generated files
+**Sensitive data classification gate**: before opening any dataset file, every skill checks for signals that it's classified Restricted, Sensitive, or Highly Sensitive (a known classification, a DUA, a confidentiality notice, or your own description). If present, the skill won't open the file at all — it drops to Mode B and tells you why, drafting from documentation only. You can explicitly authorize inspection anyway if you confirm you're allowed to share it.
 
-Flags surface directly on the cell instead of as extra columns:
+## How to catalog a dataset
 
-* **Needs review** (any sheet/file): the cell is filled yellow and carries an Excel comment with the specific question to resolve.
-* **Sensitive variable** (`DataDict.xlsx` only): the `Sensitive?` cell is filled red.
+Tell Claude Code what you want to catalog — for example:
 
-Resolve these before treating a catalog as final — check every yellow cell's comment, especially in the DataBio sheet's Section E (consent/privacy/access), which is always flagged for human input regardless of documentation.
+> "I need to fill out a data profile for the XYZ dataset. It's a CSV file at [path or link], and I have a study protocol I can share too."
 
-## Running the generator manually
+The first time you do this on a machine, Claude will ask for the folder path from Setup and remember it after that — see "Where everything lives" below. From there:
 
-```
-python generate_catalog.py                                   # reads ./catalog_draft.json
-python generate_catalog.py --input path/to/draft.json
-python generate_catalog.py --input draft.json --output-dir out/
-python generate_catalog.py --only databio                    # just the DataBio sheet, e.g. from the data-bio skill
-python generate_catalog.py --only metadata,datadict          # any subset
-```
+1. **First pass** — Claude drafts the whole thing itself from whatever you shared (the dataset file, protocol, papers, etc.), filling in as much as it can on its own.
+2. **Section-by-section review** — it walks through the draft with you one section at a time, showing what it filled in and why, and revises based on your feedback until you approve that section before moving to the next.
+3. **Generate** — once every section is signed off, it generates the Excel file(s) directly in your synced folder — no export step.
 
-Requires `openpyxl` (`pip install openpyxl`). Templates are resolved relative to the script's own location, so it works from any working directory as long as `catalog_draft.json` (or `--input`) is reachable.
+Once it's done, here's how to tell what's finished versus what still needs your attention before treating the file as final:
+
+* **DataBio sheet**: an unresolved question is a blank Answer cell, with Confidence reading "Needs human input" and Source explaining what's needed. Everything else gets a real Confidence (High/Medium/Low) and a Source attribution (a citation, "Generated by AI, reviewed and approved by {reviewer}," or "Human input.").
+* **Metadata sheet**: an unresolved field is simply a blank Response cell — this sheet has no Confidence/Source columns; that context lives only in chat and `catalog_draft.json` while drafting.
+* **DataDict.xlsx**: still uses the older cell-based flags — a `needs_review` variable gets a yellow-filled Variable Name cell with an Excel comment, and `sensitive: true` variables get a red-filled `Sensitive?` cell.
+
+Resolve these before treating a catalog as final — scan the DataBio sheet for "Needs human input" and the Metadata sheet for blank Response cells.
+
+## Skills
+
+Each skill lives in `skills/<name>/SKILL.md`. You may invoke by name (e.g. `/catalog-dataset`) or by asking for what it does — see each skill's "When to use this skill" section.
+
+### `catalog-dataset` — primary entry point
+
+Fills the whole data profile (Metadata + DataBio) in one pass: drafts what it can, asks you about the rest in three rounds (Critical → Important → Optional), then generates the Excel file directly into SharePoint. **Use this by default.**
+
+### `metadata` / `data-bio`
+
+Fill one sheet at a time instead of the whole profile — `metadata` for the 17 admin fields, `data-bio` for the 22 narrative questions. Reach for these only when you specifically want just one sheet; a plain "fill out a data biography" request defaults to `catalog-dataset` instead (see Terminology below).
+
+### `data-dictionary`
+
+Fills `DataDict.xlsx` — always separate and optional, never bundled in automatically. Works from the actual data file or from documentation alone; if the dataset is several distinct files, it'll ask whether you want one combined dictionary or one per file.
+
+### `assess-dataset`
+
+A standalone data-quality/usability check (completeness, consistency, validity, etc.) — not part of the catalog output, but useful before or alongside cataloging.
 
 ## Repo layout
 
 ```
-DataProfile.xlsx / DataDict.xlsx   Blank templates -- do not overwrite with real data
-generate_catalog.py                Fills the templates from catalog_draft.json
-catalog_draft.json                 Working draft for the dataset currently being cataloged
+.claude-plugin/       plugin.json + marketplace.json -- makes this repo installable via /plugin
+generate_catalog.py   Fills the SharePoint-hosted templates from catalog_draft.json
+catalog_draft.json    Working draft for the dataset currently being cataloged
 skills/
-  catalog-dataset/   metadata/   data-bio/   data-dictionary/   profile-dataset/
+  catalog-dataset/   metadata/   data-bio/   data-dictionary/   assess-dataset/
 ```
 
+`DataProfile.xlsx` and `DataDict.xlsx` are **not** in this repo — the masters live in the SharePoint `_Templates_` folder, which is the single source of truth for template content.

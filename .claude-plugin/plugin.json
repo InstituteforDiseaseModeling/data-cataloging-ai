@@ -1,0 +1,9 @@
+{
+  "name": "data-cataloging-ai",
+  "description": "Skills for auto-generating dataset documentation: administrative metadata, a data biography, and a variable-level data dictionary.",
+  "version": "1.0.0",
+  "author": {
+    "name": "Institute for Disease Modeling"
+  },
+  "repository": "https://github.com/InstituteforDiseaseModeling/data-cataloging-ai"
+}

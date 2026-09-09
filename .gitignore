@@ -1,0 +1,7 @@
+# Local machine-specific config (SharePoint-synced folder paths) -- never shared,
+# written by generate_catalog.py --set-data-profiles-root
+cataloging_config.json
+.cataloging_config.json
+
+__pycache__/
+*.pyc
